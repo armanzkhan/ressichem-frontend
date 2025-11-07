@@ -1,5 +1,8 @@
 "use client";
 
+// Prevent static generation for this page
+export const dynamic = 'force-dynamic';
+
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import { PermissionGate } from "@/components/Auth/PermissionGate";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
@@ -7,11 +10,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
-import PushNotificationService from "@/services/pushNotificationService";
 
 export default function TestPushPage() {
-  const [pushService] = useState(() => PushNotificationService.getInstance());
+  const [pushService, setPushService] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setMounted(true);
+    import("@/services/pushNotificationService").then((module) => {
+      const PushNotificationService = module.default;
+      setPushService(PushNotificationService.getInstance());
+    }).catch((error) => {
+      console.error('Failed to load push notification service:', error);
+    });
+  }, []);
   const [permissionState, setPermissionState] = useState<{
     granted: boolean;
     denied: boolean;
@@ -22,7 +36,7 @@ export default function TestPushPage() {
   const [testResults, setTestResults] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!pushService) return;
+    if (!pushService || !mounted) return;
     
     const checkState = () => {
       const supported = pushService.isPushSupported();
@@ -35,13 +49,14 @@ export default function TestPushPage() {
     };
 
     checkState();
-  }, [pushService]);
+  }, [pushService, mounted]);
 
   const addTestResult = (result: string) => {
     setTestResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${result}`]);
   };
 
   const handleRequestPermission = async () => {
+    if (!pushService || !mounted) return;
     setIsLoading(true);
     addTestResult("Requesting push notification permission...");
     
@@ -72,6 +87,7 @@ export default function TestPushPage() {
   };
 
   const handleTestNotification = async () => {
+    if (!pushService || !mounted) return;
     addTestResult("Sending test notification...");
     
     try {
@@ -83,6 +99,7 @@ export default function TestPushPage() {
   };
 
   const handleInitialize = async () => {
+    if (!pushService || !mounted) return;
     setIsLoading(true);
     addTestResult("Initializing push notification service...");
     
@@ -172,15 +189,15 @@ export default function TestPushPage() {
                   
                   <div className="flex justify-between text-sm">
                     <span>Service Worker:</span>
-                    <span className={'serviceWorker' in navigator ? 'text-green-600' : 'text-red-600'}>
-                      {'serviceWorker' in navigator ? 'Available' : 'Not Available'}
+                    <span className={typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? 'text-green-600' : 'text-red-600'}>
+                      {typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? 'Available' : 'Not Available'}
                     </span>
                   </div>
                   
                   <div className="flex justify-between text-sm">
                     <span>Push Manager:</span>
-                    <span className={'PushManager' in window ? 'text-green-600' : 'text-red-600'}>
-                      {'PushManager' in window ? 'Available' : 'Not Available'}
+                    <span className={typeof window !== 'undefined' && 'PushManager' in window ? 'text-green-600' : 'text-red-600'}>
+                      {typeof window !== 'undefined' && 'PushManager' in window ? 'Available' : 'Not Available'}
                     </span>
                   </div>
                 </div>

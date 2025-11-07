@@ -1,5 +1,8 @@
 "use client";
 
+// Prevent static generation for this page
+export const dynamic = 'force-dynamic';
+
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import { PermissionGate } from "@/components/Auth/PermissionGate";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
@@ -7,31 +10,45 @@ import { PushNotificationPermission } from "@/components/Notifications/PushNotif
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell, Settings, Smartphone, Monitor, Tablet } from "lucide-react";
 import { useState, useEffect } from "react";
-import { pushNotificationService } from "@/services/pushNotificationService";
 
 export default function PushSettingsPage() {
+  const [pushService, setPushService] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
   const [isSupported, setIsSupported] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    setMounted(true);
+    import("@/services/pushNotificationService").then((module) => {
+      const PushNotificationService = module.default;
+      setPushService(PushNotificationService.getInstance());
+    }).catch((error) => {
+      console.error('Failed to load push notification service:', error);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!pushService || !mounted) return;
     
     const checkSupport = () => {
-      const supported = pushNotificationService.isPushSupported();
+      const supported = pushService.isPushSupported();
       setIsSupported(supported);
       
       if (supported) {
-        const info = pushNotificationService.getSubscriptionInfo();
+        const info = pushService.getSubscriptionInfo();
         setSubscriptionInfo(info);
       }
     };
 
     checkSupport();
-  }, []);
+  }, [pushService, mounted]);
 
   const handlePermissionChange = (granted: boolean) => {
+    if (!pushService || !mounted) return;
+    
     if (granted) {
-      const info = pushNotificationService.getSubscriptionInfo();
+      const info = pushService.getSubscriptionInfo();
       setSubscriptionInfo(info);
     } else {
       setSubscriptionInfo(null);

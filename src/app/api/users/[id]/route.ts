@@ -4,13 +4,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:50
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    const resolvedParams = await Promise.resolve(params);
-    const { id } = resolvedParams;
+    const { id } = await params;
 
     const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
       method: 'GET',
@@ -35,13 +34,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    const resolvedParams = await Promise.resolve(params);
-    const { id } = resolvedParams;
+    const { id } = await params;
     const body = await request.json();
 
     const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
@@ -68,13 +66,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    const resolvedParams = await Promise.resolve(params);
-    const { id } = resolvedParams;
+    const { id } = await params;
 
     const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
       method: 'DELETE',
