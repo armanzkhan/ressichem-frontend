@@ -422,202 +422,177 @@ export default function CompanyDashboard() {
           </div>
           
           <div className="relative">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900 dark:text-white mb-2 text-center sm:text-left">
-              ⚡ Quick Actions
-            </h2>
-            <p className="text-blue-700 dark:text-blue-300 text-sm sm:text-base mb-6 text-center sm:text-left">
-              Access your most important management tools
-            </p>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900 dark:text-white">
+                  Quick Actions
+                </h2>
+                <p className="text-blue-700 dark:text-blue-300 text-sm sm:text-base">
+                  Access your most important management tools
+                </p>
+              </div>
+            </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mt-6">
               {/* Manage Users */}
               <button
                 onClick={() => router.push('/users')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden bg-white dark:bg-gray-dark hover:bg-blue-50 dark:hover:bg-blue-900/20 border-2 border-blue-900/20 dark:border-blue-900/30 hover:border-blue-900 dark:hover:border-blue-700 rounded-2xl p-5 sm:p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl"
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-900 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                    </div>
+                    <svg className="w-5 h-5 text-blue-900 dark:text-blue-400 opacity-70 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">Manage Users</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">User accounts & permissions</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-
-              {/* Manage Customers */}
-              <button
-                onClick={() => router.push('/customers')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">Manage Customers</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">Customer database</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <h3 className="font-bold text-lg sm:text-xl mb-1 text-blue-900 dark:text-white">Manage Users</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">User accounts & permissions</p>
                 </div>
               </button>
 
               {/* Manage Managers */}
               <button
                 onClick={() => router.push('/managers')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden bg-white dark:bg-gray-dark hover:bg-blue-50 dark:hover:bg-blue-900/20 border-2 border-blue-900/20 dark:border-blue-900/30 hover:border-blue-900 dark:hover:border-blue-700 rounded-2xl p-5 sm:p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl"
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-900 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                      </svg>
+                    </div>
+                    <svg className="w-5 h-5 text-blue-900 dark:text-blue-400 opacity-70 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">Manage Managers</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">Team management</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <h3 className="font-bold text-lg sm:text-xl mb-1 text-blue-900 dark:text-white">Manage Managers</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Team management</p>
                 </div>
               </button>
 
               {/* View Orders */}
               <button
                 onClick={() => router.push('/orders')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden bg-white dark:bg-gray-dark hover:bg-blue-50 dark:hover:bg-blue-900/20 border-2 border-blue-900/20 dark:border-blue-900/30 hover:border-blue-900 dark:hover:border-blue-700 rounded-2xl p-5 sm:p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl"
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-900 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                      </svg>
+                    </div>
+                    <svg className="w-5 h-5 text-blue-900 dark:text-blue-400 opacity-70 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">View Orders</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">Order management</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <h3 className="font-bold text-lg sm:text-xl mb-1 text-blue-900 dark:text-white">View Orders</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Order management</p>
                 </div>
               </button>
 
               {/* Manage Invoices */}
               <button
                 onClick={() => router.push('/invoices')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden bg-white dark:bg-gray-dark hover:bg-blue-50 dark:hover:bg-blue-900/20 border-2 border-blue-900/20 dark:border-blue-900/30 hover:border-blue-900 dark:hover:border-blue-700 rounded-2xl p-5 sm:p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl"
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-900 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <svg className="w-5 h-5 text-blue-900 dark:text-blue-400 opacity-70 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">Manage Invoices</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">Invoice management</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <h3 className="font-bold text-lg sm:text-xl mb-1 text-blue-900 dark:text-white">Manage Invoices</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Invoice management</p>
                 </div>
               </button>
 
               {/* Customer Ledger */}
               <button
                 onClick={() => router.push('/customer-ledger')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden bg-white dark:bg-gray-dark hover:bg-blue-50 dark:hover:bg-blue-900/20 border-2 border-blue-900/20 dark:border-blue-900/30 hover:border-blue-900 dark:hover:border-blue-700 rounded-2xl p-5 sm:p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl"
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-900 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <svg className="w-5 h-5 text-blue-900 dark:text-blue-400 opacity-70 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">Customer Ledger</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">Financial tracking</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <h3 className="font-bold text-lg sm:text-xl mb-1 text-blue-900 dark:text-white">Customer Ledger</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Financial tracking</p>
                 </div>
               </button>
 
               {/* Manage Products */}
               <button
                 onClick={() => router.push('/products')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden bg-white dark:bg-gray-dark hover:bg-blue-50 dark:hover:bg-blue-900/20 border-2 border-blue-900/20 dark:border-blue-900/30 hover:border-blue-900 dark:hover:border-blue-700 rounded-2xl p-5 sm:p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl"
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-900 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                    <svg className="w-5 h-5 text-blue-900 dark:text-blue-400 opacity-70 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">Manage Products</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">Product catalog</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <h3 className="font-bold text-lg sm:text-xl mb-1 text-blue-900 dark:text-white">Manage Products</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Product catalog</p>
                 </div>
               </button>
 
               {/* Manage Categories */}
               <button
                 onClick={() => router.push('/categories')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden bg-white dark:bg-gray-dark hover:bg-blue-50 dark:hover:bg-blue-900/20 border-2 border-blue-900/20 dark:border-blue-900/30 hover:border-blue-900 dark:hover:border-blue-700 rounded-2xl p-5 sm:p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl"
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-900 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                    </div>
+                    <svg className="w-5 h-5 text-blue-900 dark:text-blue-400 opacity-70 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">Manage Categories</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">Product categories</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <h3 className="font-bold text-lg sm:text-xl mb-1 text-blue-900 dark:text-white">Manage Categories</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Product categories</p>
                 </div>
               </button>
 
-              {/* Create Customer User */}
-              <button
-                onClick={() => router.push('/users/create')}
-                className="group relative overflow-hidden bg-blue-900 hover:bg-blue-800 text-white rounded-2xl p-4 sm:p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">Create Customer User</h3>
-                    <p className="text-xs sm:text-sm text-white/80 opacity-90 truncate">Add new customer</p>
-                  </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
             </div>
           </div>
         </div>
