@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { useUser } from "@/components/Auth/user-context";
+import { getBackendUrl } from "@/lib/getBackendUrl";
 // Using existing icons from the project
 
 export default function Signin() {
@@ -44,7 +45,7 @@ export default function Signin() {
     setError("");
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = getBackendUrl();
       console.log('API URL:', apiUrl);
       console.log('Login attempt with:', { email: form.email });
       
@@ -159,12 +160,17 @@ export default function Signin() {
       
     } catch (err: any) {
       console.error("Login error:", err);
+      console.error("Error code:", err.code);
+      console.error("Error message:", err.message);
+      console.error("Error response:", err.response);
       
       // Handle different error types
       if (err.code === 'ECONNABORTED') {
         setError("Connection timeout. Please check your internet connection and try again.");
-      } else if (err.code === 'ECONNREFUSED' || err.message?.includes('Network Error')) {
-        setError("Cannot connect to server. Please ensure the backend is running on http://localhost:5000");
+      } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error') || err.message?.includes('Failed to fetch')) {
+        const backendUrl = getBackendUrl();
+        console.error("Network error detected. Backend URL should be:", backendUrl);
+        setError(`Cannot connect to server. Please ensure the backend is running on ${backendUrl}`);
       } else if (err.response?.status === 401) {
         setError("Invalid credentials. Please check your email and password.");
         setLoginAttempts(prev => prev + 1);
