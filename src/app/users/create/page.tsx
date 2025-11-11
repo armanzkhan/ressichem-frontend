@@ -260,6 +260,20 @@ export default function CreateUserPage() {
       } else {
         const errorMessage = responseData.error || responseData.message || 'Failed to create user';
         console.error('❌ User creation failed:', responseData);
+        
+        // Handle token expiration - redirect to login
+        if (response.status === 403 && (errorMessage.includes('Invalid or expired token') || errorMessage.includes('expired'))) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("userType");
+          localStorage.removeItem("userRole");
+          setMessage("❌ Your session has expired. Redirecting to login...");
+          setTimeout(() => {
+            window.location.href = "/auth/sign-in";
+          }, 2000);
+          return;
+        }
+        
         setMessage(`❌ ${errorMessage}`);
       }
     } catch (error: any) {
