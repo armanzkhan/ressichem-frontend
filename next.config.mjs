@@ -8,8 +8,8 @@ const nextConfig = {
   
   // Environment variables
   env: {
-    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000',
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || (process.env.VERCEL ? 'https://mern-stack-dtgy.vercel.app' : 'http://localhost:5000'),
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || (process.env.VERCEL ? 'https://mern-stack-dtgy.vercel.app' : 'http://localhost:5000'),
   },
   
   // Simple webpack config

@@ -4,7 +4,7 @@ const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_A
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;

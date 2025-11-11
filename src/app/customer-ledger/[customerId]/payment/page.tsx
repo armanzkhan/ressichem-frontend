@@ -257,9 +257,9 @@ const CustomerLedgerPaymentPage = ({ params }: CustomerLedgerPaymentPageProps) =
                 : 'bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 border border-red-200 dark:border-red-800'
             }`}>
               {messageType === 'success' ? (
-                <CheckCircle2 className={`h-5 w-5 mt-0.5 flex-shrink-0 ${messageType === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
+                <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0 text-green-600 dark:text-green-400" />
               ) : (
-                <AlertCircle className={`h-5 w-5 mt-0.5 flex-shrink-0 ${messageType === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0 text-red-600 dark:text-red-400" />
               )}
               <p className={`font-medium ${messageType === 'success' ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'}`}>
                 {message}
