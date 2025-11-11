@@ -3,6 +3,7 @@
 import { SidebarProvider } from "@/components/Layouts/sidebar/sidebar-context";
 import { ThemeProvider } from "next-themes";
 import React from "react";
+import { Toaster } from "sonner";
 
 // --- UserProvider scaffold ---
 import { UserProvider } from "../components/Auth/user-context"
@@ -24,6 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </SimpleNotificationManager>
         </RealtimeNotificationProvider>
       </UserProvider>
+      <Toaster position="top-right" richColors />
     </ThemeProvider>
   );
 }

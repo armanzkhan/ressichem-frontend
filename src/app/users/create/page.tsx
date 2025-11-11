@@ -4,6 +4,7 @@ import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface Role {
   _id: string;
@@ -225,6 +226,17 @@ export default function CreateUserPage() {
       const responseData = await response.json();
       
       if (response.ok) {
+        const createdUser = responseData.user || responseData;
+        const userName = createdUser.firstName && createdUser.lastName 
+          ? `${createdUser.firstName} ${createdUser.lastName}`
+          : createdUser.email || 'User';
+        
+        // Show toast notification
+        toast.success("User Created Successfully!", {
+          description: `${userName} has been created successfully.`,
+          duration: 5000,
+        });
+        
         setMessage("✅ User created successfully!");
         // Reset form
         setFormData({
