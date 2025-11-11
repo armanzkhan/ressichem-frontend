@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrlServer } from '@/lib/getBackendUrlServer';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = getBackendUrlServer();
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,25 +53,43 @@ export async function POST(request: NextRequest) {
     const token = authHeader?.replace("Bearer ", "");
     const body = await request.json();
 
+    console.log('🔍 Creating user - Backend URL:', API_BASE_URL);
+    console.log('🔍 Request body:', { ...body, password: body.password ? '***' : undefined });
+
     const response = await fetch(`${API_BASE_URL}/api/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to create user' }));
-      return NextResponse.json({ error: errorData.message || 'Failed to create user' }, { status: response.status });
+    const responseText = await response.text();
+    let errorData;
+    try {
+      errorData = JSON.parse(responseText);
+    } catch {
+      errorData = { message: responseText || 'Failed to create user' };
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      console.error('❌ Backend error:', response.status, errorData);
+      return NextResponse.json({ 
+        error: errorData.message || errorData.error || 'Failed to create user',
+        details: errorData 
+      }, { status: response.status });
+    }
+
+    const data = JSON.parse(responseText);
+    console.log('✅ User created successfully');
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error creating user:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('❌ Error creating user:', error);
+    return NextResponse.json({ 
+      error: 'Internal Server Error',
+      message: error.message || 'Failed to connect to backend server'
+    }, { status: 500 });
   }
 }
 

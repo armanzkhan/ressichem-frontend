@@ -15,6 +15,18 @@ export function getBackendUrl(): string {
     return process.env.NEXT_PUBLIC_BACKEND_URL;
   }
 
+  // Check if frontend is deployed on Vercel (server-side or client-side detection)
+  const isVercelDeployment = 
+    typeof window !== 'undefined' 
+      ? window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel.com')
+      : process.env.VERCEL || process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
+
+  if (isVercelDeployment) {
+    const url = 'https://mern-stack-dtgy.vercel.app';
+    console.log('[getBackendUrl] Vercel deployment detected, using backend URL:', url);
+    return url;
+  }
+
   // In browser environment, use current hostname
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
@@ -29,23 +41,9 @@ export function getBackendUrl(): string {
       return url;
     }
     
-    // If on Vercel (vercel.app domain), use deployed backend
-    if (hostname.includes('vercel.app')) {
-      const url = 'https://mern-stack-dtgy.vercel.app';
-      console.log('[getBackendUrl] Using Vercel backend URL:', url);
-      return url;
-    }
-    
     // For IP addresses or other domain names, use the same hostname with port 5000
     const url = `${protocol}//${hostname}:5000`;
     console.log('[getBackendUrl] Using network URL:', url);
-    return url;
-  }
-
-  // Server-side: Check if on Vercel
-  if (process.env.VERCEL) {
-    const url = 'https://mern-stack-dtgy.vercel.app';
-    console.log('[getBackendUrl] Server-side Vercel deployment, using:', url);
     return url;
   }
 

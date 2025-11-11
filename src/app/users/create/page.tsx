@@ -222,6 +222,8 @@ export default function CreateUserPage() {
         body: JSON.stringify(formData),
       });
 
+      const responseData = await response.json();
+      
       if (response.ok) {
         setMessage("✅ User created successfully!");
         // Reset form
@@ -256,11 +258,14 @@ export default function CreateUserPage() {
           router.push('/users');
         }, 2000);
       } else {
-        setMessage("❌ Failed to create user");
+        const errorMessage = responseData.error || responseData.message || 'Failed to create user';
+        console.error('❌ User creation failed:', responseData);
+        setMessage(`❌ ${errorMessage}`);
       }
-    } catch (error) {
-      console.error('Error creating user:', error);
-      setMessage("❌ Error creating user");
+    } catch (error: any) {
+      console.error('❌ Error creating user:', error);
+      const errorMessage = error.message || 'Failed to connect to server. Please check your connection.';
+      setMessage(`❌ ${errorMessage}`);
     } finally {
       setLoading(false);
     }
