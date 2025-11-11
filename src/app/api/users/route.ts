@@ -56,7 +56,8 @@ export async function POST(request: NextRequest) {
     console.log('🔍 Creating user - Backend URL:', API_BASE_URL);
     console.log('🔍 Request body:', { ...body, password: body.password ? '***' : undefined });
 
-    const response = await fetch(`${API_BASE_URL}/api/users`, {
+    // Use /api/users/create endpoint which only requires auth (not create_user permission)
+    const response = await fetch(`${API_BASE_URL}/api/users/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
