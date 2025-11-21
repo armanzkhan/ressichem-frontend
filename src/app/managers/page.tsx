@@ -377,7 +377,23 @@ function ManagersPage() {
 
   // Edit manager
   const editManager = (manager: Manager) => {
-    setEditingManager(manager);
+    // Ensure all required properties exist with defaults
+    const safeManager: Manager = {
+      ...manager,
+      user_id: manager.user_id || '',
+      managerLevel: manager.managerLevel || 'junior',
+      isActive: manager.isActive !== undefined ? manager.isActive : true,
+      assignedCategories: manager.assignedCategories && Array.isArray(manager.assignedCategories) 
+        ? manager.assignedCategories 
+        : [],
+      performance: manager.performance || {
+        totalOrdersManaged: 0,
+        totalProductsManaged: 0,
+        averageResponseTime: 0,
+        lastActiveAt: new Date().toISOString()
+      }
+    };
+    setEditingManager(safeManager);
     setShowEditModal(true);
   };
 
@@ -387,13 +403,23 @@ function ManagersPage() {
     
     try {
       const token = localStorage.getItem("token");
+      
+      // Prepare update data - only send necessary fields
+      const updateData = {
+        managerLevel: editingManager.managerLevel || 'junior',
+        isActive: editingManager.isActive !== undefined ? editingManager.isActive : true,
+        assignedCategories: editingManager.assignedCategories && Array.isArray(editingManager.assignedCategories)
+          ? editingManager.assignedCategories
+          : []
+      };
+      
       const response = await fetch(`/api/managers/${editingManager._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editingManager),
+        body: JSON.stringify(updateData),
       });
 
       if (response.ok) {
@@ -1300,10 +1326,10 @@ function ManagersPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Assigned Categories</label>
                   <div className="flex flex-wrap gap-2">
-                    {editingManager.assignedCategories.map((categoryItem, index) => {
+                    {(editingManager.assignedCategories && Array.isArray(editingManager.assignedCategories) ? editingManager.assignedCategories : []).map((categoryItem, index) => {
                       const categoryName = typeof categoryItem === 'string' 
                         ? categoryItem 
-                        : (categoryItem as any).category || categoryItem;
+                        : (categoryItem as any)?.category || categoryItem;
                       
                       return (
                         <span
@@ -1314,6 +1340,9 @@ function ManagersPage() {
                         </span>
                       );
                     })}
+                    {(!editingManager.assignedCategories || editingManager.assignedCategories.length === 0) && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 italic">No categories assigned</span>
+                    )}
                   </div>
                 </div>
                 
@@ -1322,15 +1351,15 @@ function ManagersPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Orders Managed</p>
-                      <p className="text-lg font-semibold text-blue-900 dark:text-white">{editingManager.performance.totalOrdersManaged}</p>
+                      <p className="text-lg font-semibold text-blue-900 dark:text-white">{editingManager.performance?.totalOrdersManaged || 0}</p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Products Managed</p>
-                      <p className="text-lg font-semibold text-blue-900 dark:text-white">{editingManager.performance.totalProductsManaged}</p>
+                      <p className="text-lg font-semibold text-blue-900 dark:text-white">{editingManager.performance?.totalProductsManaged || 0}</p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Response Time</p>
-                      <p className="text-lg font-semibold text-blue-900 dark:text-white">{editingManager.performance.averageResponseTime}h</p>
+                      <p className="text-lg font-semibold text-blue-900 dark:text-white">{editingManager.performance?.averageResponseTime || 0}h</p>
                     </div>
                   </div>
                 </div>
@@ -1477,7 +1506,7 @@ function ManagersPage() {
                   <label className="block text-sm font-medium text-blue-900 dark:text-white mb-2">Manager ID</label>
                   <input
                     type="text"
-                    value={editingManager.user_id}
+                    value={editingManager.user_id || ''}
                     disabled
                     className="w-full rounded-lg border border-stroke bg-gray-100 px-4 py-3 text-gray-500 dark:border-dark-3 dark:bg-gray-800 dark:text-gray-400"
                   />
@@ -1486,7 +1515,7 @@ function ManagersPage() {
                 <div>
                   <label className="block text-sm font-medium text-blue-900 dark:text-white mb-2">Manager Level</label>
                   <select
-                    value={editingManager.managerLevel}
+                    value={editingManager.managerLevel || 'junior'}
                     onChange={(e) => setEditingManager({...editingManager, managerLevel: e.target.value})}
                     className="w-full rounded-lg border border-stroke bg-transparent px-4 py-3 text-blue-900 focus:border-blue-900 focus:outline-none dark:border-dark-3 dark:bg-dark-2 dark:text-white"
                   >
@@ -1500,7 +1529,7 @@ function ManagersPage() {
                 <div>
                   <label className="block text-sm font-medium text-blue-900 dark:text-white mb-2">Status</label>
                   <select
-                    value={editingManager.isActive ? 'active' : 'inactive'}
+                    value={(editingManager.isActive !== undefined ? editingManager.isActive : true) ? 'active' : 'inactive'}
                     onChange={(e) => setEditingManager({...editingManager, isActive: e.target.value === 'active'})}
                     className="w-full rounded-lg border border-stroke bg-transparent px-4 py-3 text-blue-900 focus:border-blue-900 focus:outline-none dark:border-dark-3 dark:bg-dark-2 dark:text-white"
                   >
@@ -1512,29 +1541,37 @@ function ManagersPage() {
                 <div>
                   <label className="block text-sm font-medium text-blue-900 dark:text-white mb-2">Assigned Categories</label>
                   <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {availableCategories.map((category) => (
-                      <label key={category} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={editingManager.assignedCategories.includes(category)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setEditingManager({
-                                ...editingManager,
-                                assignedCategories: [...editingManager.assignedCategories, category]
-                              });
-                            } else {
-                              setEditingManager({
-                                ...editingManager,
-                                assignedCategories: editingManager.assignedCategories.filter(c => c !== category)
-                              });
-                            }
-                          }}
-                          className="mr-2"
-                        />
-                        <span className="text-sm text-blue-900 dark:text-white">{category}</span>
-                      </label>
-                    ))}
+                    {availableCategories.map((category) => {
+                      const assignedCategories = editingManager.assignedCategories && Array.isArray(editingManager.assignedCategories) 
+                        ? editingManager.assignedCategories 
+                        : [];
+                      return (
+                        <label key={category} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={assignedCategories.includes(category)}
+                            onChange={(e) => {
+                              const currentCategories = editingManager.assignedCategories && Array.isArray(editingManager.assignedCategories)
+                                ? editingManager.assignedCategories
+                                : [];
+                              if (e.target.checked) {
+                                setEditingManager({
+                                  ...editingManager,
+                                  assignedCategories: [...currentCategories, category]
+                                });
+                              } else {
+                                setEditingManager({
+                                  ...editingManager,
+                                  assignedCategories: currentCategories.filter(c => c !== category)
+                                });
+                              }
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="text-sm text-blue-900 dark:text-white">{category}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
