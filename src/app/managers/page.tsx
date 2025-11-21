@@ -222,7 +222,28 @@ function ManagersPage() {
 
       if (response.ok) {
         const categories = await response.json();
-        setAvailableCategories(categories);
+        
+        // Allowed categories for manager assignment
+        const allowedCategories = [
+          'Building Care & Maintenance',
+          'Concrete Admixtures',
+          'Decorative Concrete',
+          'Dry Mix Mortars / Premix Plasters',
+          'Epoxy Adhesives and Coatings',
+          'Epoxy Floorings & Coatings',
+          'Specialty Products',
+          'Tiling and Grouting Materials'
+        ];
+        
+        // Filter to only show allowed categories
+        const processedCategories = categories
+          .map((cat: any) => {
+            const categoryName = cat.name || cat.mainCategory || cat;
+            return typeof categoryName === 'string' ? categoryName : categoryName;
+          })
+          .filter((catName: string) => allowedCategories.includes(catName));
+        
+        setAvailableCategories(processedCategories);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
