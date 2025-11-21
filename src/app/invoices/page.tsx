@@ -109,6 +109,30 @@ export default function InvoicesPage() {
     }
   }, [user, filter]);
 
+  // Recalculate stats for customers when invoices change
+  useEffect(() => {
+    if (user?.isCustomer) {
+      const customerInvoices = invoices;
+      const calculatedStats = {
+        totalInvoices: customerInvoices.length,
+        totalAmount: customerInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0),
+        paidAmount: customerInvoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0),
+        pendingAmount: customerInvoices.reduce((sum, inv) => sum + (inv.remainingAmount || 0), 0),
+        draftInvoices: customerInvoices.filter(inv => inv.status === 'draft').length,
+        sentInvoices: customerInvoices.filter(inv => inv.status === 'sent').length,
+        paidInvoices: customerInvoices.filter(inv => inv.status === 'paid').length,
+        overdueInvoices: customerInvoices.filter(inv => {
+          if (inv.status === 'paid' || inv.status === 'cancelled') return false;
+          const dueDate = new Date(inv.dueDate);
+          return dueDate < new Date();
+        }).length
+      };
+      
+      console.log('   📊 Calculated customer invoice stats:', calculatedStats);
+      setInvoiceStats(calculatedStats);
+    }
+  }, [invoices, user?.isCustomer]);
+
   const fetchInvoices = async () => {
     try {
       setLoadingInvoices(true);
@@ -239,17 +263,23 @@ export default function InvoicesPage() {
       if (response.ok) {
         const data = await response.json();
         const stats = data.data || {};
-        console.log('   Invoice stats fetched:', stats);
-        setInvoiceStats({
-          totalInvoices: stats.totalInvoices || 0,
-          totalAmount: stats.totalAmount || 0,
-          paidAmount: stats.paidAmount || 0,
-          pendingAmount: stats.pendingAmount || 0,
-          draftInvoices: stats.draftInvoices || 0,
-          sentInvoices: stats.sentInvoices || 0,
-          paidInvoices: stats.paidInvoices || 0,
-          overdueInvoices: stats.overdueInvoices || 0
-        });
+        console.log('   Invoice stats fetched from backend:', stats);
+        
+        // For customers, we'll calculate stats from filtered invoices in a separate effect
+        // For non-customers, use backend stats directly
+        if (!user?.isCustomer) {
+          setInvoiceStats({
+            totalInvoices: stats.totalInvoices || 0,
+            totalAmount: stats.totalAmount || 0,
+            paidAmount: stats.paidAmount || 0,
+            pendingAmount: stats.pendingAmount || 0,
+            draftInvoices: stats.draftInvoices || 0,
+            sentInvoices: stats.sentInvoices || 0,
+            paidInvoices: stats.paidInvoices || 0,
+            overdueInvoices: stats.overdueInvoices || 0
+          });
+        }
+        // For customers, stats will be calculated from filtered invoices in useEffect
       } else {
         if (response.status === 401 || response.status === 403) {
           localStorage.removeItem("token");
