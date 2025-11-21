@@ -107,8 +107,24 @@ export default function CreateManagerPage() {
             categories = categoriesData.products;
           }
           
-          console.log('Processed categories:', categories.length);
-          setAvailableCategories(categories);
+          // Process categories to ensure we have proper name extraction
+          const processedCategories = categories.map((cat: any) => {
+            // If it's already a simple object with name, use it
+            if (cat.name) {
+              return { _id: cat._id || cat.id || cat.name, name: cat.name };
+            }
+            // If it's a string, use it as name
+            if (typeof cat === 'string') {
+              return { _id: cat, name: cat };
+            }
+            // Try to extract name from various possible fields
+            const name = cat.mainCategory || cat.category || cat.name || cat;
+            return { _id: cat._id || cat.id || name, name: name };
+          }).filter((cat: any) => cat.name); // Filter out any invalid entries
+          
+          console.log('Processed categories:', processedCategories.length);
+          console.log('Category names:', processedCategories.map((c: any) => c.name));
+          setAvailableCategories(processedCategories);
         } else {
           console.error('Failed to fetch categories from both endpoints');
           setMessage("Failed to load categories");
@@ -282,7 +298,7 @@ export default function CreateManagerPage() {
               {/* Assigned Categories */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Assigned Categories * ({availableCategories.length} available)
+                  Assigned Categories *
                 </label>
                 {fetchingData ? (
                   <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 text-center">
@@ -300,9 +316,9 @@ export default function CreateManagerPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                     {availableCategories.map((category) => {
-                      // Handle different category formats
-                      const categoryName = (category as any).name || (category as any).mainCategory || category;
-                      const categoryId = category._id || (category as any).id || category;
+                      // Extract category name - should be consistent after processing
+                      const categoryName = category.name || (category as any).mainCategory || String(category);
+                      const categoryId = category._id || (category as any).id || categoryName;
                       
                       return (
                         <label key={categoryId} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
@@ -312,7 +328,7 @@ export default function CreateManagerPage() {
                             onChange={() => handleCategoryToggle(categoryName)}
                             className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-600 dark:border-gray-500 dark:text-indigo-400"
                           />
-                          <span className="text-sm text-gray-900 dark:text-white">{categoryName}</span>
+                          <span className="text-sm text-gray-900 dark:text-white font-medium">{categoryName}</span>
                         </label>
                       );
                     })}
