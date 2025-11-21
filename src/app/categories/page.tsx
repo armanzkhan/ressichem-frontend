@@ -88,7 +88,19 @@ export default function CategoriesPage() {
         console.log('✅ Categories count:', categoriesData.length);
         console.log('✅ Categories type:', typeof categoriesData);
         console.log('✅ Categories is array:', Array.isArray(categoriesData));
-        setCategories(categoriesData);
+        
+        // Filter to only allowed categories when setting state
+        const filteredData = categoriesData.filter((cat: any) => {
+          const categoryName = (cat.name || cat.mainCategory || '').trim();
+          const isAllowed = categoryName && allowedCategories.includes(categoryName);
+          if (!isAllowed && categoryName) {
+            console.log('❌ Category not allowed:', categoryName);
+          }
+          return isAllowed;
+        });
+        console.log('✅ Filtered categories count:', filteredData.length);
+        console.log('✅ Filtered category names:', filteredData.map((c: any) => c.name || c.mainCategory));
+        setCategories(filteredData);
       } else {
         console.error('❌ Categories API failed with status:', categoriesRes.status);
         console.error('❌ Categories API status text:', categoriesRes.statusText);
@@ -201,34 +213,22 @@ export default function CategoriesPage() {
     return false;
   });
 
-  // Allowed categories for manager assignment
-  const allowedCategories = [
-    'Building Care & Maintenance',
-    'Concrete Admixtures',
-    'Decorative Concrete',
-    'Dry Mix Mortars / Premix Plasters',
-    'Epoxy Adhesives and Coatings',
-    'Epoxy Floorings & Coatings',
-    'Specialty Products',
-    'Tiling and Grouting Materials'
-  ];
-
   // Get only allowed main categories (not subcategories) for selection
   const allCategories = categories
     .map(category => {
       // Handle different category structures
       if ((category as any).name) {
         // Database format: { name, level, parent, path, isActive, subCategories }
-        return (category as any).name;
+        return ((category as any).name || '').trim();
       } else if (category.mainCategory) {
         // Legacy format: { mainCategory, subCategories }
-        return category.mainCategory;
+        return (category.mainCategory || '').trim();
       }
       return null;
     })
     .filter((categoryName): categoryName is string => {
-      // Only include allowed main categories
-      return categoryName !== null && allowedCategories.includes(categoryName);
+      // Only include allowed main categories (case-sensitive exact match)
+      return categoryName !== null && categoryName !== '' && allowedCategories.includes(categoryName);
     });
 
   // Debug logging
