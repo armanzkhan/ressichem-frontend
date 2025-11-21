@@ -111,7 +111,19 @@ export default function CreateUserPage() {
         if (permissionsRes.ok) {
           const permissionsData = await permissionsRes.json();
           console.log("Permissions loaded:", permissionsData);
-          setPermissions(Array.isArray(permissionsData) ? permissionsData : permissionsData.permissions || []);
+          const permissionsArray = Array.isArray(permissionsData) ? permissionsData : permissionsData.permissions || [];
+          // Deduplicate permissions by _id (or key if _id is missing)
+          const seen = new Set<string>();
+          const uniquePermissions = permissionsArray.filter((permission: Permission) => {
+            const identifier = permission._id || permission.key || '';
+            if (seen.has(identifier)) {
+              return false;
+            }
+            seen.add(identifier);
+            return true;
+          });
+          console.log("Unique permissions:", uniquePermissions.length, "out of", permissionsArray.length);
+          setPermissions(uniquePermissions);
         } else {
           console.error("Failed to fetch permissions:", permissionsRes.status, permissionsRes.statusText);
           // Set default permissions if API fails
@@ -721,8 +733,8 @@ export default function CreateUserPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {permissions.map((permission) => (
-                    <label key={permission._id} className="flex items-center gap-2 p-3 rounded-lg border border-blue-900/20 dark:border-gray-600 hover:bg-blue-900/5 dark:hover:bg-gray-700">
+                  {permissions.map((permission, index) => (
+                    <label key={permission._id || permission.key || `permission-${index}`} className="flex items-center gap-2 p-3 rounded-lg border border-blue-900/20 dark:border-gray-600 hover:bg-blue-900/5 dark:hover:bg-gray-700">
                       <input
                         type="checkbox"
                         checked={formData.permissions.includes(permission._id)}
