@@ -65,35 +65,20 @@ export default function CreateManagerPage() {
           setAvailableUsers(usersData.users || []);
         }
 
-        // Fetch categories - try both endpoints
+        // Fetch only main categories (level 1) for manager assignment
         let categoriesData = null;
         
-        // Try /api/product-categories first (with auth)
+        // Use /api/products/categories?type=main to get only main categories
         try {
-          const categoriesRes1 = await fetch('/api/product-categories', { headers });
-          if (categoriesRes1.ok) {
-            categoriesData = await categoriesRes1.json();
-            console.log('Categories fetched from /api/product-categories:', categoriesData);
+          const categoriesRes = await fetch('/api/products/categories?type=main', { headers });
+          if (categoriesRes.ok) {
+            categoriesData = await categoriesRes.json();
+            console.log('Main categories fetched from /api/products/categories:', categoriesData);
           } else {
-            console.error('Failed to fetch from /api/product-categories:', categoriesRes1.status);
+            console.error('Failed to fetch categories from /api/products/categories:', categoriesRes.status);
           }
         } catch (error) {
-          console.log('Failed to fetch from /api/product-categories:', error);
-        }
-        
-        // If first attempt failed, try /api/products/categories
-        if (!categoriesData) {
-          try {
-            const categoriesRes2 = await fetch('/api/products/categories?type=main', { headers });
-            if (categoriesRes2.ok) {
-              categoriesData = await categoriesRes2.json();
-              console.log('Categories fetched from /api/products/categories:', categoriesData);
-            } else {
-              console.error('Failed to fetch categories from /api/products/categories:', categoriesRes2.status);
-            }
-          } catch (error) {
-            console.error('Failed to fetch categories from /api/products/categories:', error);
-          }
+          console.error('Failed to fetch categories from /api/products/categories:', error);
         }
         
         if (categoriesData) {
@@ -107,22 +92,27 @@ export default function CreateManagerPage() {
             categories = categoriesData.products;
           }
           
-          // Process categories to ensure we have proper name extraction
-          const processedCategories = categories.map((cat: any) => {
-            // If it's already a simple object with name, use it
-            if (cat.name) {
-              return { _id: cat._id || cat.id || cat.name, name: cat.name };
-            }
-            // If it's a string, use it as name
-            if (typeof cat === 'string') {
-              return { _id: cat, name: cat };
-            }
-            // Try to extract name from various possible fields
-            const name = cat.mainCategory || cat.category || cat.name || cat;
-            return { _id: cat._id || cat.id || name, name: name };
-          }).filter((cat: any) => cat.name); // Filter out any invalid entries
+          // Process categories to ensure we have proper name extraction and filter to only level 1
+          const processedCategories = categories
+            .map((cat: any) => {
+              // If it's already a simple object with name, use it
+              if (cat.name) {
+                return { _id: cat._id || cat.id || cat.name, name: cat.name, level: cat.level };
+              }
+              // If it's a string, use it as name
+              if (typeof cat === 'string') {
+                return { _id: cat, name: cat, level: 1 };
+              }
+              // Try to extract name from various possible fields
+              const name = cat.mainCategory || cat.category || cat.name || cat;
+              return { _id: cat._id || cat.id || name, name: name, level: cat.level || 1 };
+            })
+            .filter((cat: any) => {
+              // Only include categories with valid names and level 1 (main categories)
+              return cat.name && (cat.level === 1 || cat.level === undefined);
+            }); // Filter out any invalid entries and non-main categories
           
-          console.log('Processed categories:', processedCategories.length);
+          console.log('Processed main categories:', processedCategories.length);
           console.log('Category names:', processedCategories.map((c: any) => c.name));
           setAvailableCategories(processedCategories);
         } else {
