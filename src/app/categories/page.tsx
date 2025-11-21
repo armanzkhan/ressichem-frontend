@@ -182,11 +182,23 @@ export default function CategoriesPage() {
         setSelectedCategories([]);
         fetchData(); // Refresh data
       } else {
-        if (handleAuthError(response.status, "Please log in to assign categories")) {
+        // Handle 401 (unauthorized) - redirect to login
+        if (response.status === 401) {
+          if (handleAuthError(response.status, "Please log in to assign categories")) {
+            return;
+          }
+        }
+        
+        // Handle 403 (forbidden) - show permission error, don't redirect
+        if (response.status === 403) {
+          const error = await response.json().catch(() => ({ message: 'You do not have permission to assign categories' }));
+          setMessage(`❌ Permission Denied: ${error.message || 'You do not have permission to assign categories. Please contact an administrator.'}`);
           return;
         }
-        const error = await response.json();
-        setMessage(`❌ Error: ${error.message}`);
+        
+        // Handle other errors
+        const error = await response.json().catch(() => ({ message: 'Failed to assign categories' }));
+        setMessage(`❌ Error: ${error.message || 'Failed to assign categories'}`);
       }
     } catch (error) {
       setMessage("❌ Error assigning categories");
