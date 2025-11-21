@@ -181,6 +181,39 @@ export default function CreateUserPage() {
     fetchData();
   }, []);
 
+  // Auto-fill customer information when user type is customer
+  useEffect(() => {
+    if (formData.userType === 'customer') {
+      const contactName = formData.firstName && formData.lastName 
+        ? `${formData.firstName} ${formData.lastName}`.trim()
+        : formData.firstName || formData.lastName || '';
+      
+      setFormData(prev => {
+        const updates: any = {};
+        
+        // Only set companyName if it's empty
+        if (!prev.companyName) {
+          updates.companyName = 'Ressichem';
+        }
+        
+        // Only set contactName if it's empty and we have firstName/lastName
+        if (!prev.contactName && contactName) {
+          updates.contactName = contactName;
+        } else if (contactName && prev.contactName === '') {
+          // Update if it was empty and now we have a name
+          updates.contactName = contactName;
+        }
+        
+        // Only set customerPhone if it's empty and we have phone
+        if (!prev.customerPhone && prev.phone) {
+          updates.customerPhone = prev.phone;
+        }
+        
+        return Object.keys(updates).length > 0 ? { ...prev, ...updates } : prev;
+      });
+    }
+  }, [formData.userType, formData.firstName, formData.lastName, formData.phone]);
+
   // Auto-assign roles and permissions when user type changes and data is loaded
   useEffect(() => {
     if (fetchingData || roles.length === 0 || permissions.length === 0) {
@@ -563,7 +596,17 @@ export default function CreateUserPage() {
                     value="customer"
                     checked={formData.userType === 'customer'}
                     onChange={(e) => {
-                      setFormData({...formData, userType: e.target.value, isCustomer: true, isManager: false});
+                      const contactName = formData.firstName && formData.lastName 
+                        ? `${formData.firstName} ${formData.lastName}`.trim()
+                        : formData.firstName || formData.lastName || '';
+                      setFormData({
+                        ...formData, 
+                        userType: e.target.value, 
+                        isCustomer: true, 
+                        isManager: false,
+                        companyName: 'Ressichem',
+                        contactName: contactName || formData.contactName
+                      });
                     }}
                     className="text-blue-900 focus:ring-blue-900"
                   />
