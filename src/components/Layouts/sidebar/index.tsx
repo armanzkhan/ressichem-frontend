@@ -14,7 +14,7 @@ import { useSidebarContext } from "./sidebar-context";
 export function Sidebar() {
   const pathname = usePathname();
   const { setIsOpen, isOpen, isMobile, toggleSidebar } = useSidebarContext();
-  const { user, hasPermission, isSuperAdmin, isCompanyAdmin, isManager, logout } = useUser();
+  const { user, hasPermission, isSuperAdmin, isCompanyAdmin, isManager, isCustomer, logout } = useUser();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const handleLogout = () => {
@@ -39,6 +39,11 @@ export function Sidebar() {
   // Filter navigation items based on permissions
   const filterNavItems = (items: any[]) => {
     return items.filter((item) => {
+      // Hide "Company Customers" completely
+      if (item.title === "Company Customers") {
+        return false;
+      }
+
       // Debug logging
       if (item.title === "Customer Management") {
         console.log('🔍 Customer Management menu item check:');
@@ -74,6 +79,11 @@ export function Sidebar() {
       // Filter sub-items if they exist
       if (item.items && item.items.length > 0) {
         const filteredSubItems = item.items.filter((subItem: any) => {
+          // Hide "Customer Ledger" when user is a customer
+          if (subItem.title === "Customer Ledger" && isCustomer()) {
+            return false;
+          }
+
           if (subItem.requireSuperAdmin && !isSuperAdmin()) {
             return false;
           }
