@@ -129,6 +129,23 @@ export default function CategoriesPage() {
         const managersData = await managersRes.json();
         console.log('✅ Managers data received:', managersData);
         console.log('✅ Managers count:', managersData.managers?.length || 0);
+        
+        // Debug: Log all manager emails to see if shariqsales@gmail.com is in the list
+        if (managersData.managers && Array.isArray(managersData.managers)) {
+          console.log('✅ Manager emails:', managersData.managers.map((m: any) => m.email));
+          console.log('✅ Manager user_ids:', managersData.managers.map((m: any) => m.user_id));
+          console.log('✅ Manager names:', managersData.managers.map((m: any) => `${m.firstName} ${m.lastName}`));
+          
+          // Check specifically for shariqsales@gmail.com
+          const shariqManager = managersData.managers.find((m: any) => m.email === 'shariqsales@gmail.com');
+          if (shariqManager) {
+            console.log('✅ Found shariqsales@gmail.com in managers:', shariqManager);
+          } else {
+            console.log('❌ shariqsales@gmail.com NOT found in managers list');
+            console.log('   Available emails:', managersData.managers.map((m: any) => m.email));
+          }
+        }
+        
         setManagers(managersData.managers || []);
       } else {
         if (handleAuthError(managersRes.status, "Please log in to view managers")) {
@@ -315,11 +332,20 @@ export default function CategoriesPage() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-blue-900 dark:text-white focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 >
                   <option value="">Choose a manager...</option>
-                  {Array.isArray(managers) && managers.map((manager) => (
-                    <option key={manager._id} value={manager._id}>
-                      {manager.firstName} {manager.lastName} ({manager.email})
-                    </option>
-                  ))}
+                  {Array.isArray(managers) && managers.length > 0 ? (
+                    managers.map((manager) => {
+                      const displayName = `${manager.firstName || ''} ${manager.lastName || ''}`.trim() || manager.email || 'Unknown';
+                      const displayText = displayName ? `${displayName} (${manager.email || 'No email'})` : manager.email || 'Unknown Manager';
+                      
+                      return (
+                        <option key={manager._id || manager.user_id} value={manager._id || manager.user_id}>
+                          {displayText}
+                        </option>
+                      );
+                    })
+                  ) : (
+                    <option value="" disabled>No managers available</option>
+                  )}
                 </select>
               </div>
 
