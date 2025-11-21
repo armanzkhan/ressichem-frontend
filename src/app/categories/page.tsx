@@ -30,6 +30,18 @@ interface Manager {
 }
 
 export default function CategoriesPage() {
+  // Allowed categories for manager assignment
+  const allowedCategories = [
+    'Building Care & Maintenance',
+    'Concrete Admixtures',
+    'Decorative Concrete',
+    'Dry Mix Mortars / Premix Plasters',
+    'Epoxy Adhesives and Coatings',
+    'Epoxy Floorings & Coatings',
+    'Specialty Products',
+    'Tiling and Grouting Materials'
+  ];
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,11 +172,19 @@ export default function CategoriesPage() {
     }
   };
 
-  // Filter categories
+  // Filter categories - only show allowed categories
   const filteredCategories = categories.filter(category => {
     if (!category) return false;
     
-    // Handle different category structures
+    // Get category name
+    const categoryName = (category as any).name || category.mainCategory;
+    
+    // Only include allowed categories
+    if (!categoryName || !allowedCategories.includes(categoryName)) {
+      return false;
+    }
+    
+    // Handle different category structures for search
     if ((category as any).name) {
       // Database format: { name, level, parent, path, isActive, subCategories }
       return (category as any).name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -181,24 +201,35 @@ export default function CategoriesPage() {
     return false;
   });
 
-  // Get all available categories as flat list
-  const allCategories = categories.flatMap(category => {
-    // Handle different category structures
-    if ((category as any).name) {
-      // Database format: { name, level, parent, path, isActive, subCategories }
-      return [(category as any).name, ...(category.subCategories || [])];
-    } else if (category.mainCategory) {
-      // Legacy format: { mainCategory, subCategories }
-      return [
-        category.mainCategory,
-        ...category.subCategories.flatMap(sub => [
-          sub.name,
-          ...sub.subSubCategories
-        ])
-      ];
-    }
-    return [];
-  });
+  // Allowed categories for manager assignment
+  const allowedCategories = [
+    'Building Care & Maintenance',
+    'Concrete Admixtures',
+    'Decorative Concrete',
+    'Dry Mix Mortars / Premix Plasters',
+    'Epoxy Adhesives and Coatings',
+    'Epoxy Floorings & Coatings',
+    'Specialty Products',
+    'Tiling and Grouting Materials'
+  ];
+
+  // Get only allowed main categories (not subcategories) for selection
+  const allCategories = categories
+    .map(category => {
+      // Handle different category structures
+      if ((category as any).name) {
+        // Database format: { name, level, parent, path, isActive, subCategories }
+        return (category as any).name;
+      } else if (category.mainCategory) {
+        // Legacy format: { mainCategory, subCategories }
+        return category.mainCategory;
+      }
+      return null;
+    })
+    .filter((categoryName): categoryName is string => {
+      // Only include allowed main categories
+      return categoryName !== null && allowedCategories.includes(categoryName);
+    });
 
   // Debug logging
   console.log('Categories count:', categories.length);
