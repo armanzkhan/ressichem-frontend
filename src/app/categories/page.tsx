@@ -146,8 +146,20 @@ export default function CategoriesPage() {
   };
 
   useEffect(() => {
+    // Clear any previous error messages on page load
+    setMessage("");
     fetchData();
   }, []);
+
+  // Auto-clear error messages after 5 seconds
+  useEffect(() => {
+    if (message && message.includes('❌')) {
+      const timer = setTimeout(() => {
+        setMessage("");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   // Handle category assignment
   const handleAssignCategories = async () => {
