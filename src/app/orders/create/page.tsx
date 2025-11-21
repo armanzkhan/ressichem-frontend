@@ -906,8 +906,8 @@ export default function CreateOrderPage() {
         items: formData.items.map(item => ({
           product: item.product._id,
           quantity: item.quantity,
-          unitPrice: item.price,
-          total: item.price * item.quantity,
+          unitPrice: item.product.price,
+          total: item.product.price * item.quantity,
           tdsLink: item.tdsLink || ""
         })),
         subtotal: subtotal,
