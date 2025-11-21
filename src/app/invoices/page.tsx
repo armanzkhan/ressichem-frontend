@@ -162,16 +162,37 @@ export default function InvoicesPage() {
         // Defensive client-side filtering for customers (backup to backend filtering)
         // Only show invoices that belong to the current customer
         let filteredInvoices = invoicesData;
-        if (user?.isCustomer && user?.customerProfile?.customer_id) {
-          const customerId = user.customerProfile.customer_id;
+        if (user?.isCustomer) {
+          // Try multiple ways to identify the customer
+          const customerId = user?.customerProfile?.customer_id;
+          const customerEmail = user?.email;
+          
           filteredInvoices = invoicesData.filter((inv: Invoice) => {
-            // Check if invoice customer matches current customer
-            const invoiceCustomerId = typeof inv.customer === 'object' 
-              ? inv.customer._id 
-              : inv.customer;
-            return invoiceCustomerId === customerId;
+            // Check if invoice customer matches current customer by ID
+            if (customerId) {
+              const invoiceCustomerId = typeof inv.customer === 'object' 
+                ? inv.customer._id 
+                : inv.customer;
+              if (invoiceCustomerId === customerId || 
+                  (typeof invoiceCustomerId === 'string' && customerId.toString() === invoiceCustomerId.toString())) {
+                return true;
+              }
+            }
+            
+            // Fallback: Check by email if customer ID doesn't match
+            if (customerEmail && typeof inv.customer === 'object' && inv.customer.email) {
+              return inv.customer.email.toLowerCase() === customerEmail.toLowerCase();
+            }
+            
+            return false;
           });
-          console.log('   After client-side filtering:', filteredInvoices.length);
+          
+          console.log('   Customer filtering applied:', {
+            customerId,
+            customerEmail,
+            totalInvoices: invoicesData.length,
+            filteredInvoices: filteredInvoices.length
+          });
         }
         
         setInvoices(filteredInvoices);
