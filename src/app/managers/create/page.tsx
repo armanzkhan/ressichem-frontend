@@ -92,7 +92,19 @@ export default function CreateManagerPage() {
             categories = categoriesData.products;
           }
           
-          // Process categories to ensure we have proper name extraction and filter to only level 1
+          // Allowed categories for manager assignment
+          const allowedCategories = [
+            'Building Care & Maintenance',
+            'Concrete Admixtures',
+            'Decorative Concrete',
+            'Dry Mix Mortars / Premix Plasters',
+            'Epoxy Adhesives and Coatings',
+            'Epoxy Floorings & Coatings',
+            'Specialty Products',
+            'Tiling and Grouting Materials'
+          ];
+          
+          // Process categories to ensure we have proper name extraction and filter to only allowed categories
           const processedCategories = categories
             .map((cat: any) => {
               // If it's already a simple object with name, use it
@@ -108,9 +120,9 @@ export default function CreateManagerPage() {
               return { _id: cat._id || cat.id || name, name: name, level: cat.level || 1 };
             })
             .filter((cat: any) => {
-              // Only include categories with valid names and level 1 (main categories)
-              return cat.name && (cat.level === 1 || cat.level === undefined);
-            }); // Filter out any invalid entries and non-main categories
+              // Only include categories that are in the allowed list
+              return cat.name && allowedCategories.includes(cat.name);
+            }); // Filter to only show allowed categories
           
           console.log('Processed main categories:', processedCategories.length);
           console.log('Category names:', processedCategories.map((c: any) => c.name));
