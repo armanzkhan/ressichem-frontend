@@ -100,6 +100,17 @@ export default function CategoriesPage() {
         });
         console.log('✅ Filtered categories count:', filteredData.length);
         console.log('✅ Filtered category names:', filteredData.map((c: any) => c.name || c.mainCategory));
+        // Debug: Check subcategories for all filtered categories
+        filteredData.forEach((cat: any, index: number) => {
+          const catName = cat.name || cat.mainCategory;
+          console.log(`✅ Category ${index + 1} (${catName}):`, {
+            subCategories: cat.subCategories,
+            subCategoriesType: typeof cat.subCategories,
+            subCategoriesIsArray: Array.isArray(cat.subCategories),
+            subCategoriesLength: Array.isArray(cat.subCategories) ? cat.subCategories.length : 'N/A',
+            fullCategory: cat
+          });
+        });
         setCategories(filteredData);
       } else {
         console.error('❌ Categories API failed with status:', categoriesRes.status);
@@ -369,7 +380,10 @@ export default function CategoriesPage() {
                 filteredCategories.map((category) => {
                   // Handle different category structures
                   const categoryName = (category as any).name || category.mainCategory || 'Unnamed Category';
-                  const subCategories = category.subCategories || [];
+                  const subCategories = category.subCategories || (category as any).subCategories || [];
+                  
+                  // Debug logging
+                  console.log('Category:', categoryName, 'Subcategories:', subCategories, 'Full category:', category);
                   
                   return (
                     <div key={category._id} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-white/20 dark:border-gray-700/20 p-4 sm:p-6">
