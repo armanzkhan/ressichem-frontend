@@ -109,10 +109,15 @@ function ManagersPage() {
 
   // Clear URL parameters
   const clearUrlParams = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('action');
-    url.searchParams.delete('tab');
-    router.replace(url.pathname + url.search);
+    if (typeof window === 'undefined') return;
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('action');
+      url.searchParams.delete('tab');
+      router.replace(url.pathname + url.search);
+    } catch (error) {
+      console.error('Error clearing URL params:', error);
+    }
   };
 
   // Fetch managers
@@ -519,21 +524,23 @@ function ManagersPage() {
 
   // Filter managers
   const filteredManagers = managers.filter(manager => {
+    if (!manager) return false;
+    
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
-      manager.user_id.toLowerCase().includes(searchLower) ||
+      (manager.user_id && manager.user_id.toLowerCase().includes(searchLower)) ||
       (manager.fullName && manager.fullName.toLowerCase().includes(searchLower)) ||
       (manager.firstName && manager.firstName.toLowerCase().includes(searchLower)) ||
       (manager.lastName && manager.lastName.toLowerCase().includes(searchLower)) ||
       (manager.email && manager.email.toLowerCase().includes(searchLower));
     
     // Handle category filtering for both string and object formats
-    const matchesCategory = !categoryFilter || manager.assignedCategories.some(categoryItem => {
+    const matchesCategory = !categoryFilter || (manager.assignedCategories && Array.isArray(manager.assignedCategories) && manager.assignedCategories.some(categoryItem => {
       const categoryName = typeof categoryItem === 'string' 
         ? categoryItem 
-        : (categoryItem as any).category || categoryItem;
+        : (categoryItem as any)?.category || categoryItem;
       return categoryName === categoryFilter;
-    });
+    }));
     
     const matchesStatus = !statusFilter || (statusFilter === 'active' ? manager.isActive : !manager.isActive);
     
@@ -542,12 +549,14 @@ function ManagersPage() {
 
   // Get unique categories from managers
   const managerCategories = [...new Set(managers.flatMap(m => 
-    m.assignedCategories.map(categoryItem => {
-      const categoryName = typeof categoryItem === 'string' 
-        ? categoryItem 
-        : (categoryItem as any).category || categoryItem;
-      return categoryName;
-    })
+    (m?.assignedCategories && Array.isArray(m.assignedCategories)) 
+      ? m.assignedCategories.map(categoryItem => {
+          const categoryName = typeof categoryItem === 'string' 
+            ? categoryItem 
+            : (categoryItem as any)?.category || categoryItem;
+          return categoryName;
+        })
+      : []
   ))];
 
   // Get status counts
@@ -933,7 +942,7 @@ function ManagersPage() {
                               <span className="text-xs text-gray-500 dark:text-gray-400">Orders</span>
                             </div>
                             <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                              {manager.performance.totalOrdersManaged}
+                              {manager.performance?.totalOrdersManaged || 0}
                             </div>
                           </div>
                           <div className="bg-white dark:bg-gray-800 rounded-lg p-2 text-center">
@@ -942,7 +951,7 @@ function ManagersPage() {
                               <span className="text-xs text-gray-500 dark:text-gray-400">Products</span>
                             </div>
                             <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                              {manager.performance.totalProductsManaged}
+                              {manager.performance?.totalProductsManaged || 0}
                             </div>
                           </div>
                         </div>
@@ -950,7 +959,7 @@ function ManagersPage() {
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-500 dark:text-gray-400">Response Time</span>
                             <span className="text-sm font-medium text-blue-900 dark:text-white">
-                              {manager.performance.averageResponseTime}h
+                              {manager.performance?.averageResponseTime || 0}h
                             </span>
                           </div>
                         </div>
@@ -963,10 +972,10 @@ function ManagersPage() {
                           <h4 className="text-sm font-semibold text-blue-900 dark:text-white">Assigned Categories</h4>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {manager.assignedCategories.map((categoryItem, index) => {
+                          {(manager.assignedCategories && Array.isArray(manager.assignedCategories) ? manager.assignedCategories : []).map((categoryItem, index) => {
                             const categoryName = typeof categoryItem === 'string' 
                               ? categoryItem 
-                              : (categoryItem as any).category || categoryItem;
+                              : (categoryItem as any)?.category || categoryItem;
                             
                             return (
                               <span
@@ -977,7 +986,7 @@ function ManagersPage() {
                               </span>
                             );
                           })}
-                          {manager.assignedCategories.length === 0 && (
+                          {(!manager.assignedCategories || manager.assignedCategories.length === 0) && (
                             <span className="text-xs text-gray-500 dark:text-gray-400 italic">No categories assigned</span>
                           )}
                         </div>
@@ -1068,11 +1077,11 @@ function ManagersPage() {
                         
                           <td className="px-4 py-4">
                             <div className="flex flex-wrap gap-1">
-                              {manager.assignedCategories.map((categoryItem, index) => {
+                              {(manager.assignedCategories && Array.isArray(manager.assignedCategories) ? manager.assignedCategories : []).map((categoryItem, index) => {
                                 // Handle both string and object formats
                                 const categoryName = typeof categoryItem === 'string' 
                                   ? categoryItem 
-                                  : (categoryItem as any).category || categoryItem;
+                                  : (categoryItem as any)?.category || categoryItem;
                                 
                                 return (
                                   <span
@@ -1100,14 +1109,14 @@ function ManagersPage() {
                           <td className="px-4 py-4">
                             <div className="flex items-center">
                               <Package className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-2" />
-                              <span className="text-blue-900 dark:text-white">{manager.performance.totalOrdersManaged}</span>
+                              <span className="text-blue-900 dark:text-white">{manager.performance?.totalOrdersManaged || 0}</span>
                             </div>
                           </td>
                           
                           <td className="px-4 py-4">
                             <div className="flex items-center">
                               <BarChart3 className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-2" />
-                              <span className="text-blue-900 dark:text-white">{manager.performance.totalProductsManaged}</span>
+                              <span className="text-blue-900 dark:text-white">{manager.performance?.totalProductsManaged || 0}</span>
                             </div>
                           </td>
                           
