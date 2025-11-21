@@ -2,7 +2,7 @@
 
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -54,6 +54,7 @@ export default function CreateUserPage() {
   const [managers, setManagers] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [fetchingData, setFetchingData] = useState(true);
+  const lastAutoAssignedType = useRef<string>('');
   const router = useRouter();
 
   // Fetch roles and permissions from backend
@@ -180,6 +181,93 @@ export default function CreateUserPage() {
     fetchData();
   }, []);
 
+  // Auto-assign roles and permissions when user type changes and data is loaded
+  useEffect(() => {
+    if (fetchingData || roles.length === 0 || permissions.length === 0) {
+      return; // Wait for data to load
+    }
+
+    // Only auto-assign when user type actually changes
+    if (lastAutoAssignedType.current === formData.userType) {
+      return;
+    }
+
+    // Update the ref to track current user type
+    lastAutoAssignedType.current = formData.userType;
+
+    if (formData.userType === 'customer') {
+      const assignedRoles: string[] = [];
+      const assignedPermissions: string[] = [];
+
+      // Find Customer role
+      const customerRole = roles.find(role => 
+        role.name.toLowerCase() === 'customer' || role._id.toLowerCase() === 'customer'
+      );
+      if (customerRole) {
+        assignedRoles.push(customerRole._id);
+      }
+
+      // Assign customer permissions
+      const customerPermissionKeys = [
+        'products.read',
+        'orders.create',
+        'orders.read',
+        'profile.update',
+        'notifications.read',
+        'customer.dashboard'
+      ];
+      
+      permissions.forEach(permission => {
+        if (customerPermissionKeys.includes(permission.key) || 
+            customerPermissionKeys.some(key => permission._id === key)) {
+          assignedPermissions.push(permission._id);
+        }
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        roles: assignedRoles,
+        permissions: assignedPermissions
+      }));
+    } else if (formData.userType === 'manager') {
+      const assignedRoles: string[] = [];
+      const assignedPermissions: string[] = [];
+
+      // Find Manager role
+      const managerRole = roles.find(role => 
+        role.name.toLowerCase() === 'manager' || role._id.toLowerCase() === 'manager'
+      );
+      if (managerRole) {
+        assignedRoles.push(managerRole._id);
+      }
+
+      // Assign manager permissions (orders, products, customers)
+      permissions.forEach(permission => {
+        if (permission.key.startsWith('orders.') ||
+            permission.key.startsWith('products.') ||
+            permission.key.startsWith('customers.') ||
+            permission._id.startsWith('orders.') ||
+            permission._id.startsWith('products.') ||
+            permission._id.startsWith('customers.')) {
+          assignedPermissions.push(permission._id);
+        }
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        roles: assignedRoles,
+        permissions: assignedPermissions
+      }));
+    } else if (formData.userType === 'staff') {
+      // Clear roles and permissions for staff (they can be manually assigned)
+      setFormData(prev => ({
+        ...prev,
+        roles: [],
+        permissions: []
+      }));
+    }
+  }, [formData.userType, roles, permissions, fetchingData]);
+
   // Handle role selection
   const handleRoleChange = (roleId: string, checked: boolean) => {
     if (checked) {
@@ -209,6 +297,7 @@ export default function CreateUserPage() {
       }));
     }
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -452,7 +541,9 @@ export default function CreateUserPage() {
                     name="userType"
                     value="staff"
                     checked={formData.userType === 'staff'}
-                    onChange={(e) => setFormData({...formData, userType: e.target.value, isCustomer: false, isManager: false})}
+                    onChange={(e) => {
+                      setFormData({...formData, userType: e.target.value, isCustomer: false, isManager: false});
+                    }}
                     className="text-blue-900 focus:ring-blue-900"
                   />
                   <div>
@@ -471,7 +562,9 @@ export default function CreateUserPage() {
                     name="userType"
                     value="customer"
                     checked={formData.userType === 'customer'}
-                    onChange={(e) => setFormData({...formData, userType: e.target.value, isCustomer: true, isManager: false})}
+                    onChange={(e) => {
+                      setFormData({...formData, userType: e.target.value, isCustomer: true, isManager: false});
+                    }}
                     className="text-blue-900 focus:ring-blue-900"
                   />
                   <div>
@@ -490,7 +583,9 @@ export default function CreateUserPage() {
                     name="userType"
                     value="manager"
                     checked={formData.userType === 'manager'}
-                    onChange={(e) => setFormData({...formData, userType: e.target.value, isCustomer: false, isManager: true})}
+                    onChange={(e) => {
+                      setFormData({...formData, userType: e.target.value, isCustomer: false, isManager: true});
+                    }}
                     className="text-blue-900 focus:ring-blue-900"
                   />
                   <div>
