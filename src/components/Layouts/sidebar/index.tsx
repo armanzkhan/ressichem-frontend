@@ -44,6 +44,11 @@ export function Sidebar() {
         return false;
       }
 
+      // Hide "Customer Management" when user is a customer
+      if (item.title === "Customer Management" && isCustomer()) {
+        return false;
+      }
+
       // Debug logging
       if (item.title === "Customer Management") {
         console.log('🔍 Customer Management menu item check:');
