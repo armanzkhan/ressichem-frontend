@@ -874,13 +874,13 @@ export default function CreateUserPage() {
                     </div>
                   </div>
 
-                  {/* Manager Assignment */}
+                  {/* Manager Assignment - Category-wise */}
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                     <h5 className="text-sm font-medium text-blue-900 dark:text-white mb-3">
-                      Assign Managers (Optional)
+                      Assign Managers by Category (Optional)
                     </h5>
                     <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-                      Select one or more managers to assign to this customer. The customer will be able to order products from the assigned managers' categories.
+                      Select managers for each product category. The customer will be able to order products from the assigned managers' categories.
                     </p>
                     {fetchingData ? (
                       <div className="flex items-center justify-center py-4">
@@ -893,57 +893,92 @@ export default function CreateUserPage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="max-h-60 overflow-y-auto border border-stroke dark:border-gray-600 rounded-lg p-3">
-                          {managers.map((manager) => {
-                            const managerName = `${manager.firstName || ''} ${manager.lastName || ''}`.trim() || manager.email || 'Unknown';
-                            const managerCategories = manager.assignedCategories || [];
+                      <div className="space-y-4">
+                        {/* Group managers by category */}
+                        {(() => {
+                          // Get all unique categories from managers
+                          const categoryMap = new Map<string, any[]>();
+                          
+                          managers.forEach((manager) => {
+                            const managerCategories = manager.assignedCategories || manager.managerProfile?.assignedCategories || [];
                             const categoryNames = Array.isArray(managerCategories) 
                               ? managerCategories.map((cat: any) => typeof cat === 'string' ? cat : (cat.category || cat.name || '')).filter(Boolean)
                               : [];
                             
-                            return (
-                              <label
-                                key={manager._id || manager.user_id}
-                                className="flex items-start gap-3 p-3 rounded-lg border border-blue-900/20 dark:border-gray-600 hover:bg-blue-900/5 dark:hover:bg-gray-700 cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={formData.assignedManagers.includes(manager._id || manager.user_id)}
-                                  onChange={(e) => {
-                                    const managerId = manager._id || manager.user_id;
-                                    if (e.target.checked) {
-                                      setFormData({
-                                        ...formData,
-                                        assignedManagers: [...formData.assignedManagers, managerId]
-                                      });
-                                    } else {
-                                      setFormData({
-                                        ...formData,
-                                        assignedManagers: formData.assignedManagers.filter(id => id !== managerId)
-                                      });
-                                    }
-                                  }}
-                                  className="mt-1 rounded border-stroke text-blue-900 focus:ring-blue-900 dark:border-gray-600"
-                                />
-                                <div className="flex-1">
-                                  <div className="font-medium text-blue-900 dark:text-white">
-                                    {managerName}
+                            if (categoryNames.length === 0) {
+                              // Managers without categories go to "Uncategorized"
+                              const uncategorized = categoryMap.get('Uncategorized') || [];
+                              uncategorized.push(manager);
+                              categoryMap.set('Uncategorized', uncategorized);
+                            } else {
+                              categoryNames.forEach((catName: string) => {
+                                const existing = categoryMap.get(catName) || [];
+                                existing.push(manager);
+                                categoryMap.set(catName, existing);
+                              });
+                            }
+                          });
+
+                          // Sort categories alphabetically
+                          const sortedCategories = Array.from(categoryMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                          return (
+                            <div className="max-h-96 overflow-y-auto space-y-4">
+                              {sortedCategories.map(([categoryName, categoryManagers]) => (
+                                <div key={categoryName} className="border border-stroke dark:border-gray-600 rounded-lg p-3">
+                                  <h6 className="text-sm font-semibold text-blue-900 dark:text-white mb-2 flex items-center gap-2">
+                                    <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-1 text-xs font-medium text-blue-800 dark:text-blue-200">
+                                      {categoryName}
+                                    </span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      ({categoryManagers.length} manager{categoryManagers.length !== 1 ? 's' : ''})
+                                    </span>
+                                  </h6>
+                                  <div className="space-y-2 mt-2">
+                                    {categoryManagers.map((manager) => {
+                                      const managerName = `${manager.firstName || ''} ${manager.lastName || ''}`.trim() || manager.email || 'Unknown';
+                                      const managerId = manager._id || manager.user_id;
+                                      
+                                      return (
+                                        <label
+                                          key={managerId}
+                                          className="flex items-start gap-2 p-2 rounded-lg border border-blue-900/10 dark:border-gray-600 hover:bg-blue-900/5 dark:hover:bg-gray-700 cursor-pointer"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={formData.assignedManagers.includes(managerId)}
+                                            onChange={(e) => {
+                                              if (e.target.checked) {
+                                                setFormData({
+                                                  ...formData,
+                                                  assignedManagers: [...formData.assignedManagers, managerId]
+                                                });
+                                              } else {
+                                                setFormData({
+                                                  ...formData,
+                                                  assignedManagers: formData.assignedManagers.filter(id => id !== managerId)
+                                                });
+                                              }
+                                            }}
+                                            className="mt-1 rounded border-stroke text-blue-900 focus:ring-blue-900 dark:border-gray-600"
+                                          />
+                                          <div className="flex-1 min-w-0">
+                                            <div className="font-medium text-sm text-blue-900 dark:text-white truncate">
+                                              {managerName}
+                                            </div>
+                                            <div className="text-xs text-blue-700 dark:text-blue-300 truncate">
+                                              {manager.email || 'No email'}
+                                            </div>
+                                          </div>
+                                        </label>
+                                      );
+                                    })}
                                   </div>
-                                  <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                                    {manager.email || 'No email'}
-                                  </div>
-                                  {categoryNames.length > 0 && (
-                                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                      Categories: {categoryNames.slice(0, 3).join(', ')}
-                                      {categoryNames.length > 3 && ` +${categoryNames.length - 3} more`}
-                                    </div>
-                                  )}
                                 </div>
-                              </label>
-                            );
-                          })}
-                        </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                         {formData.assignedManagers.length > 0 && (
                           <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                             <p className="text-sm text-green-800 dark:text-green-200">
