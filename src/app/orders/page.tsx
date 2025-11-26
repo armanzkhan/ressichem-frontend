@@ -220,37 +220,38 @@ function OrdersPageContent() {
                          (order.customer?.contactName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || order.status === statusFilter;
     
-    // Manager category filtering - only show orders with products in manager's assigned categories
+    // Manager category filtering - backend should already filter, but add client-side safety check
+    // Note: Backend filters orders by manager's assigned categories, so this is just a safety check
     let matchesManagerCategories = true;
-    if (user?.isManager && user?.managerProfile?.assignedCategories) {
-      const managerCategories = user.managerProfile.assignedCategories;
-      console.log('🔍 Manager categories:', managerCategories);
-      console.log('🔍 Order categories:', order.categories);
-      console.log('🔍 Order items:', order.items?.map(item => ({
-        productName: item.product?.name,
-        productCategory: item.product?.category
-      })));
+    if (user?.isManager) {
+      // Backend should have already filtered orders, but we can do a safety check
+      // Only filter if we have categories and the order doesn't match
+      const managerCategories = user?.managerProfile?.assignedCategories || [];
       
-      // Check if order has categories matching manager's assigned categories
-      const orderHasMatchingCategories = order.categories && order.categories.some(cat => 
-        managerCategories.includes(cat)
-      );
-      
-      // Check if any product in the order matches manager's categories
-      const orderHasMatchingProducts = order.items && order.items.some(item => {
-        if (item.product?.category) {
-          const productCategory = item.product.category;
-          return managerCategories.some(managerCat => 
-            productCategory.mainCategory === managerCat ||
-            productCategory.subCategory === managerCat ||
-            productCategory.subSubCategory === managerCat
-          );
-        }
-        return false;
-      });
-      
-      matchesManagerCategories = orderHasMatchingCategories || orderHasMatchingProducts;
-      console.log('✅ Order matches manager categories:', matchesManagerCategories);
+      // If manager has assigned categories, verify the order matches (safety check)
+      if (managerCategories.length > 0) {
+        // Check if order has categories matching manager's assigned categories
+        const orderHasMatchingCategories = order.categories && order.categories.some(cat => 
+          managerCategories.includes(cat)
+        );
+        
+        // Check if any product in the order matches manager's categories
+        const orderHasMatchingProducts = order.items && order.items.some(item => {
+          if (item.product?.category) {
+            const productCategory = item.product.category;
+            return managerCategories.some(managerCat => 
+              productCategory.mainCategory === managerCat ||
+              productCategory.subCategory === managerCat ||
+              productCategory.subSubCategory === managerCat ||
+              (typeof productCategory === 'string' && productCategory.includes(managerCat))
+            );
+          }
+          return false;
+        });
+        
+        matchesManagerCategories = orderHasMatchingCategories || orderHasMatchingProducts;
+      }
+      // If manager has no assigned categories in frontend, trust backend filtering (backend will handle it)
     }
     
     return matchesSearch && matchesStatus && matchesManagerCategories;
@@ -369,6 +370,8 @@ function OrdersPageContent() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+      case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       case 'active': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
       case 'processing': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
       case 'allocated': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400';
@@ -562,9 +565,11 @@ function OrdersPageContent() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Orders</p>
                   <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
-                    {orders.length}
+                    {filteredOrders.length}
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">All orders</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    {user?.isManager ? 'Your category orders' : 'All orders'}
+                  </p>
                 </div>
                 <div className="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -579,7 +584,7 @@ function OrdersPageContent() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Pending</p>
                   <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
-                    {orders.filter(o => o.status === 'pending').length}
+                    {filteredOrders.filter(o => o.status === 'pending').length}
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Awaiting processing</p>
                 </div>
@@ -596,7 +601,7 @@ function OrdersPageContent() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Approved</p>
                   <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
-                    {orders.filter(o => o.status === 'approved').length}
+                    {filteredOrders.filter(o => o.status === 'approved').length}
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Approved orders</p>
                 </div>
@@ -613,7 +618,7 @@ function OrdersPageContent() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Completed</p>
                   <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
-                    {orders.filter(o => o.status === 'completed').length}
+                    {filteredOrders.filter(o => o.status === 'completed').length}
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Successfully delivered</p>
                 </div>
@@ -724,6 +729,8 @@ function OrdersPageContent() {
                           ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                           : order.status === 'approved'
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : order.status === 'rejected'
+                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                           : order.status === 'confirmed'
                           ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                           : order.status === 'processing'
@@ -736,7 +743,7 @@ function OrdersPageContent() {
                           ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
                           : order.status === 'completed'
                           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
-                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
                       }`}>
                         {order.status}
                       </span>
@@ -1074,33 +1081,70 @@ function OrdersPageContent() {
                 </div>
               </div>
               
-              {selectedOrder?.items && selectedOrder.items.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="font-medium text-blue-900 dark:text-white mb-2">Order Items</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-700">
-                          <th className="px-3 py-2 text-left">Product</th>
-                          <th className="px-3 py-2 text-left">Quantity</th>
-                          <th className="px-3 py-2 text-left">Unit Price</th>
-                          <th className="px-3 py-2 text-left">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedOrder.items.map((item, index) => (
-                          <tr key={`${selectedOrder?._id}-item-${index}-${item.product?._id || 'unknown'}`} className="border-b border-gray-200 dark:border-gray-600">
-                            <td className="px-3 py-2">{item.product?.name || 'N/A'}</td>
-                            <td className="px-3 py-2">{item.quantity}</td>
-                            <td className="px-3 py-2">PKR {(item.unitPrice || 0).toLocaleString()}</td>
-                            <td className="px-3 py-2">PKR {(item.total || 0).toLocaleString()}</td>
+              {selectedOrder?.items && selectedOrder.items.length > 0 && (() => {
+                // Filter items for managers - only show items in their assigned categories
+                let displayItems = selectedOrder.items;
+                
+                if (user?.isManager && user?.managerProfile?.assignedCategories) {
+                  const managerCategories = user.managerProfile.assignedCategories;
+                  displayItems = selectedOrder.items.filter(item => {
+                    if (!item.product?.category) return false;
+                    
+                    const productCategory = item.product.category;
+                    // Check if product category matches manager's assigned categories
+                    return managerCategories.some(managerCat => {
+                      if (typeof productCategory === 'string') {
+                        return productCategory.includes(managerCat) || managerCat.includes(productCategory);
+                      }
+                      return (
+                        productCategory.mainCategory === managerCat ||
+                        productCategory.subCategory === managerCat ||
+                        productCategory.subSubCategory === managerCat ||
+                        (productCategory.mainCategory && productCategory.mainCategory.includes(managerCat)) ||
+                        (productCategory.subCategory && productCategory.subCategory.includes(managerCat))
+                      );
+                    });
+                  });
+                }
+                
+                return displayItems.length > 0 ? (
+                  <div className="mt-6">
+                    <h4 className="font-medium text-blue-900 dark:text-white mb-2">
+                      Order Items {user?.isManager && displayItems.length < selectedOrder.items.length 
+                        ? `(${displayItems.length} of ${selectedOrder.items.length} - Your Categories)` 
+                        : `(${displayItems.length})`}
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-100 dark:bg-gray-700">
+                            <th className="px-3 py-2 text-left">Product</th>
+                            <th className="px-3 py-2 text-left">Quantity</th>
+                            <th className="px-3 py-2 text-left">Unit Price</th>
+                            <th className="px-3 py-2 text-left">Total</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {displayItems.map((item, index) => (
+                            <tr key={`${selectedOrder?._id}-item-${index}-${item.product?._id || 'unknown'}`} className="border-b border-gray-200 dark:border-gray-600">
+                              <td className="px-3 py-2">{item.product?.name || 'N/A'}</td>
+                              <td className="px-3 py-2">{item.quantity}</td>
+                              <td className="px-3 py-2">PKR {(item.unitPrice || 0).toLocaleString()}</td>
+                              <td className="px-3 py-2">PKR {(item.total || 0).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : user?.isManager ? (
+                  <div className="mt-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      No items in this order match your assigned categories.
+                    </p>
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
         </div>

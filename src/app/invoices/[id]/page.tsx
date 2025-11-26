@@ -17,6 +17,7 @@ interface Invoice {
   subtotal: number;
   discount: number;
   tax: number;
+  taxRate?: number;
   total: number;
   paidAmount: number;
   remainingAmount: number;
@@ -113,9 +114,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             items: mappedItems,
             discount: invoiceData.totalDiscount || invoiceData.discount || 0,
             tax: invoiceData.taxAmount || invoiceData.tax || 0,
+            taxRate: invoiceData.taxRate !== undefined ? invoiceData.taxRate : 0, // Get tax rate from invoice
             // Ensure total is calculated correctly
             total: invoiceData.total || (invoiceData.subtotal || 0) - (invoiceData.totalDiscount || 0) + (invoiceData.taxAmount || 0),
-            remainingAmount: invoiceData.remainingAmount || (invoiceData.total || 0) - (invoiceData.paidAmount || 0)
+            // Fix remaining amount calculation: handle 0 correctly (0 is falsy, so use nullish coalescing)
+            remainingAmount: invoiceData.remainingAmount !== undefined ? invoiceData.remainingAmount : ((invoiceData.total || 0) - (invoiceData.paidAmount || 0))
           };
           console.log('📄 Mapped invoice data:', mappedInvoice);
           console.log('📄 Mapped items:', mappedItems);
@@ -465,7 +468,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   <span className="print-financial-value discount">-{formatCurrency(invoice.discount || 0)}</span>
                 </div>
                 <div className="print-financial-row">
-                  <span className="print-financial-label">Tax (0%):</span>
+                  <span className="print-financial-label">Tax ({invoice.taxRate !== undefined ? invoice.taxRate : 0}%):</span>
                   <span className="print-financial-value">{formatCurrency(invoice.tax || 0)}</span>
                 </div>
                 <div className="print-financial-row total-row">
@@ -478,7 +481,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 </div>
                 <div className="print-financial-row remaining-row">
                   <span className="print-financial-label">Remaining:</span>
-                  <span className="print-financial-value">{formatCurrency(invoice.remainingAmount || invoice.total || 0)}</span>
+                  <span className="print-financial-value">{formatCurrency(invoice.remainingAmount !== undefined ? invoice.remainingAmount : ((invoice.total || 0) - (invoice.paidAmount || 0)))}</span>
                 </div>
               </div>
 
@@ -495,7 +498,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                     <span className="text-red-600 dark:text-red-400">-{formatCurrency(invoice.discount || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Tax (0%):</span>
+                    <span className="text-gray-600 dark:text-gray-400">Tax ({invoice.taxRate !== undefined ? invoice.taxRate : 0}%):</span>
                     <span className="text-blue-900 dark:text-white">{formatCurrency(invoice.tax || 0)}</span>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
@@ -511,7 +514,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                     <div className="flex justify-between font-semibold">
                       <span className="text-blue-900 dark:text-white">Remaining:</span>
-                      <span className="text-blue-900 dark:text-white">{formatCurrency(invoice.remainingAmount || invoice.total || 0)}</span>
+                      <span className="text-blue-900 dark:text-white">{formatCurrency(invoice.remainingAmount !== undefined ? invoice.remainingAmount : ((invoice.total || 0) - (invoice.paidAmount || 0)))}</span>
                     </div>
                   </div>
                 </div>

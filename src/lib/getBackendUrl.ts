@@ -21,7 +21,10 @@ export function getBackendUrl(): string {
       ? window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel.com')
       : process.env.VERCEL || process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
 
-  if (isVercelDeployment) {
+  if (isVercelDeployment && !process.env.NEXT_PUBLIC_BACKEND_URL && !process.env.NEXT_PUBLIC_API_URL) {
+    // You should set NEXT_PUBLIC_BACKEND_URL in Vercel environment variables
+    // This is just a fallback - NOT recommended for production
+    console.warn('[getBackendUrl] ⚠️ Using hardcoded backend URL. Please set NEXT_PUBLIC_BACKEND_URL in Vercel environment variables.');
     const url = 'https://mern-stack-dtgy.vercel.app';
     console.log('[getBackendUrl] Vercel deployment detected, using backend URL:', url);
     return url;

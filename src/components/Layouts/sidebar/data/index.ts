@@ -223,7 +223,7 @@ export const NAV_DATA = [
           },
           {
             title: "Product Categories",
-            url: "/categories",
+            url: "/products/categories",
             permission: "categories.read",
           },
         ],

@@ -104,6 +104,7 @@ export default function ManagerApprovalsPage() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [newlyCreatedInvoice, setNewlyCreatedInvoice] = useState<string | null>(null);
+  const [assignedCustomers, setAssignedCustomers] = useState<any[]>([]);
   const router = useRouter();
 
   // Utility functions
@@ -1144,6 +1145,51 @@ export default function ManagerApprovalsPage() {
     }
   };
 
+  // Fetch manager profile with assigned customers
+  const fetchManagerProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      console.log('🔍 Token check:', { 
+        tokenExists: !!token, 
+        tokenType: typeof token, 
+        tokenLength: token?.length,
+        tokenValue: token ? token.substring(0, 20) + '...' : 'null'
+      });
+      
+      if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
+        console.log('⚠️ No valid token found, cannot fetch manager profile');
+        setAssignedCustomers([]);
+        return;
+      }
+
+      console.log('🔍 Fetching manager profile with token...');
+      const response = await fetch('/api/managers/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📡 Manager profile response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📊 Manager profile data received:', data);
+        const manager = data.manager || data;
+        const customers = manager.assignedCustomers || [];
+        console.log('👥 Assigned customers from response:', customers);
+        setAssignedCustomers(customers);
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        console.log('⚠️ Could not fetch manager profile:', errorData);
+        setAssignedCustomers([]);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching manager profile:', error);
+      setAssignedCustomers([]);
+    }
+  };
+
   useEffect(() => {
     console.log('🔍 Manager Approvals page loaded');
     console.log('🔍 Loading state:', loading);
@@ -1153,8 +1199,12 @@ export default function ManagerApprovalsPage() {
     // Only fetch data if user is authenticated
     if (user && !userLoading) {
       console.log('🔍 User authenticated, fetching data...');
-    fetchPendingApprovals();
-    fetchInvoices();
+      fetchPendingApprovals();
+      fetchInvoices();
+      // Fetch manager profile if user is a manager
+      if (user.isManager) {
+        fetchManagerProfile();
+      }
     } else {
       console.log('🔍 User not authenticated or still loading, skipping data fetch');
     }

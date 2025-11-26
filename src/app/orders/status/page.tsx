@@ -25,11 +25,14 @@ interface Order {
 const getStatusColor = (status: string) => {
   switch (status.toLowerCase()) {
     case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+    case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+    case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
     case 'processing': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
     case 'allocated': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400';
     case 'dispatched': return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/20 dark:text-cyan-400';
     case 'shipped': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
     case 'delivered': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+    case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
     case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
     default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
   }
@@ -132,7 +135,7 @@ export default function OrderStatusPage() {
       <Breadcrumb pageName="Order Status" />
       
       {/* Status Overview */}
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <div className="rounded-lg bg-white p-6 shadow-1 dark:bg-gray-dark dark:shadow-card">
           <h3 className="text-2xl font-bold text-blue-600">{orders.length}</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">Total Orders</p>
@@ -140,6 +143,10 @@ export default function OrderStatusPage() {
         <div className="rounded-lg bg-white p-6 shadow-1 dark:bg-gray-dark dark:shadow-card">
           <h3 className="text-2xl font-bold text-yellow-600">{orders.filter(o => o.status === 'pending').length}</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
+        </div>
+        <div className="rounded-lg bg-white p-6 shadow-1 dark:bg-gray-dark dark:shadow-card">
+          <h3 className="text-2xl font-bold text-red-600">{orders.filter(o => o.status === 'rejected').length}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Rejected</p>
         </div>
         <div className="rounded-lg bg-white p-6 shadow-1 dark:bg-gray-dark dark:shadow-card">
           <h3 className="text-2xl font-bold text-blue-600">{orders.filter(o => o.status === 'active').length}</h3>

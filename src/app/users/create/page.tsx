@@ -33,6 +33,9 @@ export default function CreateUserPage() {
     userType: "staff", // staff, customer, manager
     isCustomer: false,
     isManager: false,
+    // Manager-specific fields
+    assignedCategories: [] as string[],
+    managerLevel: 'junior',
     // Customer-specific fields
     companyName: "",
     contactName: "",
@@ -44,7 +47,8 @@ export default function CreateUserPage() {
       zip: "",
       country: "Pakistan"
     },
-    customerType: "regular"
+    customerType: "regular",
+    assignedManagers: [] as string[] // Array of manager IDs
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -72,7 +76,7 @@ export default function CreateUserPage() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
         console.log("API URL:", apiUrl);
 
-        const [rolesRes, permissionsRes, managersRes, categoriesRes] = await Promise.all([
+        const [rolesRes, permissionsRes, managersRes, categoriesRes, managersAllRes] = await Promise.all([
           fetch('/api/roles', {
             headers: { Authorization: `Bearer ${token}` }
           }),
@@ -83,6 +87,9 @@ export default function CreateUserPage() {
             headers: { Authorization: `Bearer ${token}` }
           }),
           fetch('/api/product-categories', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch('/api/managers/all', {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -147,9 +154,38 @@ export default function CreateUserPage() {
           setManagers(Array.isArray(managersData) ? managersData : managersData.managers || []);
         }
 
+        // Fetch all managers for customer assignment
+        if (managersAllRes.ok) {
+          const managersAllData = await managersAllRes.json();
+          const allManagers = Array.isArray(managersAllData) ? managersAllData : managersAllData.managers || [];
+          setManagers(allManagers); // Use this for manager selection dropdown
+          console.log("All managers loaded for assignment:", allManagers.length);
+        }
+
         if (categoriesRes.ok) {
           const categoriesData = await categoriesRes.json();
-          setCategories(Array.isArray(categoriesData) ? categoriesData : categoriesData.categories || []);
+          const allCategories = Array.isArray(categoriesData) ? categoriesData : categoriesData.categories || [];
+          
+          // Filter to only show the 8 allowed main categories for manager assignment
+          const allowedMainCategories = [
+            'Building Care & Maintenance',
+            'Concrete Admixtures',
+            'Decorative Concrete',
+            'Dry Mix Mortars / Premix Plasters',
+            'Epoxy Adhesives and Coatings',
+            'Epoxy Floorings & Coatings',
+            'Specialty Products',
+            'Tiling and Grouting Materials'
+          ];
+          
+          // Filter categories to only include the 8 allowed main categories
+          const filteredCategories = allCategories.filter((category: any) => {
+            const categoryName = category.name || category.mainCategory || '';
+            return allowedMainCategories.includes(categoryName);
+          });
+          
+          console.log('✅ Filtered categories for manager assignment:', filteredCategories.length, 'out of', allCategories.length);
+          setCategories(filteredCategories);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -397,7 +433,10 @@ export default function CreateUserPage() {
             zip: "",
             country: "Pakistan"
           },
-          customerType: "regular"
+          customerType: "regular",
+          assignedManagers: [],
+          assignedCategories: [],
+          managerLevel: 'junior'
         });
         // Redirect to users list after 2 seconds
         setTimeout(() => {
@@ -585,17 +624,26 @@ export default function CreateUserPage() {
                   </div>
                 </label>
 
-                <label className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                <label className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                   formData.userType === 'customer' 
                     ? 'border-blue-900 bg-blue-900/5' 
                     : 'border-stroke dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } ${
+                  formData.isManager || formData.userType === 'manager' 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'cursor-pointer'
                 }`}>
                   <input
                     type="radio"
                     name="userType"
                     value="customer"
                     checked={formData.userType === 'customer'}
+                    disabled={formData.isManager || formData.userType === 'manager'}
                     onChange={(e) => {
+                      if (formData.isManager || formData.userType === 'manager') {
+                        alert('Managers cannot be assigned as customers. Please select a different user type.');
+                        return;
+                      }
                       const contactName = formData.firstName && formData.lastName 
                         ? `${formData.firstName} ${formData.lastName}`.trim()
                         : formData.firstName || formData.lastName || '';
@@ -608,7 +656,7 @@ export default function CreateUserPage() {
                         contactName: contactName || formData.contactName
                       });
                     }}
-                    className="text-blue-900 focus:ring-blue-900"
+                    className="text-blue-900 focus:ring-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <div>
                     <div className="font-medium text-blue-900 dark:text-white">Customer</div>
@@ -616,20 +664,29 @@ export default function CreateUserPage() {
                   </div>
                 </label>
 
-                <label className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                <label className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                   formData.userType === 'manager' 
                     ? 'border-blue-900 bg-blue-900/5' 
                     : 'border-stroke dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } ${
+                  formData.isCustomer || formData.userType === 'customer' 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'cursor-pointer'
                 }`}>
                   <input
                     type="radio"
                     name="userType"
                     value="manager"
                     checked={formData.userType === 'manager'}
+                    disabled={formData.isCustomer || formData.userType === 'customer'}
                     onChange={(e) => {
+                      if (formData.isCustomer || formData.userType === 'customer') {
+                        alert('Customers cannot be assigned as managers. Please select a different user type.');
+                        return;
+                      }
                       setFormData({...formData, userType: e.target.value, isCustomer: false, isManager: true});
                     }}
-                    className="text-blue-900 focus:ring-blue-900"
+                    className="text-blue-900 focus:ring-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <div>
                     <div className="font-medium text-blue-900 dark:text-white">Manager</div>
@@ -815,6 +872,187 @@ export default function CreateUserPage() {
                         </p>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Manager Assignment */}
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h5 className="text-sm font-medium text-blue-900 dark:text-white mb-3">
+                      Assign Managers (Optional)
+                    </h5>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                      Select one or more managers to assign to this customer. The customer will be able to order products from the assigned managers' categories.
+                    </p>
+                    {fetchingData ? (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-900"></div>
+                      </div>
+                    ) : managers.length === 0 ? (
+                      <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                        <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                          No managers available. Please create managers first.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="max-h-60 overflow-y-auto border border-stroke dark:border-gray-600 rounded-lg p-3">
+                          {managers.map((manager) => {
+                            const managerName = `${manager.firstName || ''} ${manager.lastName || ''}`.trim() || manager.email || 'Unknown';
+                            const managerCategories = manager.assignedCategories || [];
+                            const categoryNames = Array.isArray(managerCategories) 
+                              ? managerCategories.map((cat: any) => typeof cat === 'string' ? cat : (cat.category || cat.name || '')).filter(Boolean)
+                              : [];
+                            
+                            return (
+                              <label
+                                key={manager._id || manager.user_id}
+                                className="flex items-start gap-3 p-3 rounded-lg border border-blue-900/20 dark:border-gray-600 hover:bg-blue-900/5 dark:hover:bg-gray-700 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={formData.assignedManagers.includes(manager._id || manager.user_id)}
+                                  onChange={(e) => {
+                                    const managerId = manager._id || manager.user_id;
+                                    if (e.target.checked) {
+                                      setFormData({
+                                        ...formData,
+                                        assignedManagers: [...formData.assignedManagers, managerId]
+                                      });
+                                    } else {
+                                      setFormData({
+                                        ...formData,
+                                        assignedManagers: formData.assignedManagers.filter(id => id !== managerId)
+                                      });
+                                    }
+                                  }}
+                                  className="mt-1 rounded border-stroke text-blue-900 focus:ring-blue-900 dark:border-gray-600"
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium text-blue-900 dark:text-white">
+                                    {managerName}
+                                  </div>
+                                  <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                    {manager.email || 'No email'}
+                                  </div>
+                                  {categoryNames.length > 0 && (
+                                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                      Categories: {categoryNames.slice(0, 3).join(', ')}
+                                      {categoryNames.length > 3 && ` +${categoryNames.length - 3} more`}
+                                    </div>
+                                  )}
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {formData.assignedManagers.length > 0 && (
+                          <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <p className="text-sm text-green-800 dark:text-green-200">
+                              <strong>{formData.assignedManagers.length}</strong> manager(s) selected. Customer will see products from these managers' categories.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Manager Information - Only show when manager is selected */}
+            {formData.userType === 'manager' && (
+              <div>
+                <h4 className="mb-4 text-lg font-medium text-blue-900 dark:text-white">
+                  Manager Information <span className="text-red-500">*</span>
+                </h4>
+                <p className="mb-4 text-sm text-blue-700 dark:text-blue-300">
+                  Additional information required for manager accounts. Managers can be assigned categories later if needed.
+                </p>
+                
+                <div className="space-y-6">
+                  {/* Manager Level */}
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h5 className="text-sm font-medium text-blue-900 dark:text-white mb-3">Manager Level</h5>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                      {['junior', 'senior', 'lead', 'head'].map((level) => (
+                        <label key={level} className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          formData.managerLevel === level
+                            ? 'border-blue-900 bg-blue-900/5'
+                            : 'border-stroke dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="managerLevel"
+                            value={level}
+                            checked={formData.managerLevel === level}
+                            onChange={(e) => setFormData({...formData, managerLevel: e.target.value})}
+                            className="text-blue-900 focus:ring-blue-900"
+                          />
+                          <span className="text-sm font-medium text-blue-900 dark:text-white capitalize">{level}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Category Assignment */}
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h5 className="text-sm font-medium text-blue-900 dark:text-white mb-3">
+                      Assign Categories (Optional)
+                    </h5>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                      Select product categories this manager will manage. Categories can be assigned later if needed.
+                    </p>
+                    {fetchingData ? (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-900"></div>
+                      </div>
+                    ) : categories.length === 0 ? (
+                      <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                        <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                          No categories available. Categories can be assigned later.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="max-h-60 overflow-y-auto border border-stroke dark:border-gray-600 rounded-lg p-3">
+                          {categories.map((category) => (
+                            <label
+                              key={category._id || category.name}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-blue-900/20 dark:border-gray-600 hover:bg-blue-900/5 dark:hover:bg-gray-700 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.assignedCategories.includes(category.name || category._id)}
+                                onChange={(e) => {
+                                  const categoryName = category.name || category._id;
+                                  if (e.target.checked) {
+                                    setFormData({
+                                      ...formData,
+                                      assignedCategories: [...formData.assignedCategories, categoryName]
+                                    });
+                                  } else {
+                                    setFormData({
+                                      ...formData,
+                                      assignedCategories: formData.assignedCategories.filter(c => c !== categoryName)
+                                    });
+                                  }
+                                }}
+                                className="rounded border-stroke text-blue-900 focus:ring-blue-900 dark:border-gray-600"
+                              />
+                              <div className="font-medium text-blue-900 dark:text-white">
+                                {category.name || category._id}
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                        {formData.assignedCategories.length > 0 && (
+                          <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <p className="text-sm text-green-800 dark:text-green-200">
+                              <strong>{formData.assignedCategories.length}</strong> category(s) selected.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

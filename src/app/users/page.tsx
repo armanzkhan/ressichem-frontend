@@ -112,27 +112,73 @@ export default function UsersPage() {
 
   // Filter users
   const filteredUsers = users.filter(user => {
-    const matchesSearch = (user.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (user.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
     
-    // Enhanced role matching logic
+    // Check if search term matches name or email
+    const matchesNameOrEmail = (user.firstName || '').toLowerCase().includes(searchLower) ||
+                              (user.lastName || '').toLowerCase().includes(searchLower) ||
+                              (user.email || '').toLowerCase().includes(searchLower);
+    
+    // Check if search term matches a role name - if so, also verify the user has that role
+    let matchesRoleFromSearch = true;
+    if (searchTerm) {
+      const searchLowerTrimmed = searchLower.trim();
+      
+      // If searching for "manager", only show actual managers (exclude customers)
+      if (searchLowerTrimmed === 'manager' || searchLowerTrimmed === 'managers') {
+        const isActuallyManager = user.isManager === true || user.role === 'Manager' || user.managerProfile?.manager_id;
+        const isNotCustomer = user.isCustomer !== true; // Exclude if user is marked as customer
+        matchesRoleFromSearch = isActuallyManager && isNotCustomer;
+        // If search term is "manager" but user is not a manager or is a customer, don't show
+        if (!matchesRoleFromSearch) {
+          return false;
+        }
+      }
+      // If searching for "customer", only show actual customers
+      else if (searchLowerTrimmed === 'customer' || searchLowerTrimmed === 'customers') {
+        matchesRoleFromSearch = user.isCustomer === true || user.role === 'Customer' || user.customerProfile?.customer_id;
+        // If search term is "customer" but user is not a customer, don't show even if name matches
+        if (!matchesRoleFromSearch) {
+          return false;
+        }
+      }
+      // If searching for "admin", only show admins
+      else if (searchLowerTrimmed === 'admin' || searchLowerTrimmed === 'administrator' || searchLowerTrimmed === 'administrators') {
+        matchesRoleFromSearch = user.isCompanyAdmin === true || user.isSuperAdmin === true || 
+                               user.role === 'Company Admin' || user.role === 'Super Admin';
+        if (!matchesRoleFromSearch) {
+          return false;
+        }
+      }
+    }
+    
+    // Enhanced role matching logic for dropdown filter
     let matchesRole = true;
     if (filterRole) {
       if (filterRole === 'Company Admin') {
-        matchesRole = user.role === 'Company Admin' || user.isCompanyAdmin || user.department === 'Administration';
+        matchesRole = (user.role === 'Company Admin' || user.isCompanyAdmin || user.department === 'Administration') && 
+                     !user.isCustomer && !user.isManager;
       } else if (filterRole === 'Super Admin') {
-        matchesRole = user.role === 'Super Admin' || user.isSuperAdmin || false;
+        matchesRole = (user.role === 'Super Admin' || user.isSuperAdmin) && 
+                     !user.isCustomer && !user.isManager;
       } else if (filterRole === 'Customer') {
-        matchesRole = user.role === 'Customer' || user.isCustomer || false;
+        matchesRole = (user.role === 'Customer' || user.isCustomer || user.customerProfile?.customer_id) && 
+                     !user.isManager && !user.isCompanyAdmin && !user.isSuperAdmin;
       } else if (filterRole === 'Manager') {
-        matchesRole = user.role === 'Manager' || user.isManager || false;
+        // When filtering for Manager, ensure user is actually a manager AND NOT a customer
+        // Priority: If user has isCustomer flag set to true, exclude them from manager list
+        // even if they're also a manager (users can't be both in the filter)
+        const isActuallyManager = (user.role === 'Manager' || user.isManager === true || user.managerProfile?.manager_id);
+        // Exclude if user is marked as customer (isCustomer flag takes priority)
+        const isNotCustomer = user.isCustomer !== true;
+        matchesRole = isActuallyManager && isNotCustomer;
       } else {
         matchesRole = (user.role || user.department || 'Staff') === filterRole;
       }
     }
     
-    return matchesSearch && matchesRole;
+    // Combine search and role filters
+    return matchesNameOrEmail && matchesRoleFromSearch && matchesRole;
   });
 
   // Handle delete user

@@ -57,6 +57,28 @@ interface Customer {
     isActive: boolean;
     notes: string;
   };
+  assignedManagers?: Array<{
+    manager_id: {
+      _id: string;
+      user_id: string;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      assignedCategories: Array<{
+        category: string;
+        isActive: boolean;
+      }> | string[];
+      managerLevel: string;
+    };
+    assignedBy?: {
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+    assignedAt: string;
+    isActive: boolean;
+    notes?: string;
+  }>;
   preferences: {
     preferredCategories: string[];
     notificationPreferences: {
@@ -540,34 +562,97 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            {/* Assigned Manager Info */}
-            {customer.assignedManager && (
+            {/* Assigned Managers Info */}
+            {(customer.assignedManagers && customer.assignedManagers.length > 0) || customer.assignedManager ? (
               <div className="bg-white shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Your Assigned Manager</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Manager Details</h4>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {customer.assignedManager.assignedBy.firstName} {customer.assignedManager.assignedBy.lastName}
-                      </p>
-                      <p className="text-sm text-gray-500">{customer.assignedManager.assignedBy.email}</p>
-                      <p className="text-sm text-gray-500">Level: {customer.assignedManager.manager_id.managerLevel}</p>
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Your Assigned Manager{customer.assignedManagers && customer.assignedManagers.length > 1 ? 's' : ''}
+                  </h3>
+                  
+                  {/* Display all assigned managers from assignedManagers array */}
+                  {customer.assignedManagers && customer.assignedManagers.length > 0 ? (
+                    <div className="space-y-4">
+                      {customer.assignedManagers.map((am, index) => {
+                        const manager = am.manager_id;
+                        const managerName = manager.firstName && manager.lastName 
+                          ? `${manager.firstName} ${manager.lastName}`
+                          : manager.email || manager.user_id || 'Unknown Manager';
+                        const categories = Array.isArray(manager.assignedCategories)
+                          ? manager.assignedCategories.map((cat: any) => typeof cat === 'string' ? cat : (cat.category || cat))
+                          : [];
+                        
+                        return (
+                          <div key={index} className="border border-gray-200 rounded-lg p-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-500 mb-2">Manager Details</h4>
+                                <p className="mt-1 text-sm font-medium text-gray-900">{managerName}</p>
+                                {manager.email && (
+                                  <p className="text-sm text-gray-500">{manager.email}</p>
+                                )}
+                                <p className="text-sm text-gray-500">Level: {manager.managerLevel || 'N/A'}</p>
+                                {am.assignedAt && (
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    Assigned: {new Date(am.assignedAt).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-500 mb-2">Assigned Categories</h4>
+                                <div className="mt-1 flex flex-wrap gap-2">
+                                  {categories.length > 0 ? (
+                                    categories.map((category: string, catIndex: number) => (
+                                      <span
+                                        key={catIndex}
+                                        className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
+                                      >
+                                        {category}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span className="text-xs text-gray-400">No categories assigned</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Assigned Categories</h4>
-                      <div className="mt-1 flex flex-wrap gap-2">
-                        {customer.assignedManager.manager_id.assignedCategories.map((category, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
-                          >
-                            {category.category}
-                          </span>
-                        ))}
+                  ) : customer.assignedManager ? (
+                    // Fallback to single assignedManager for backward compatibility
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Manager Details</h4>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {customer.assignedManager.assignedBy?.firstName} {customer.assignedManager.assignedBy?.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">{customer.assignedManager.assignedBy?.email}</p>
+                        <p className="text-sm text-gray-500">Level: {customer.assignedManager.manager_id?.managerLevel}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Assigned Categories</h4>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          {customer.assignedManager.manager_id?.assignedCategories?.map((category: any, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
+                            >
+                              {typeof category === 'string' ? category : category.category}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">Your Assigned Manager</h3>
+                  <p className="text-sm text-gray-500">No manager has been assigned to your account yet.</p>
                 </div>
               </div>
             )}

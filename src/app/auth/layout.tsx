@@ -16,15 +16,11 @@ export const metadata: Metadata = {
 
 export default function AuthLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
-        <Providers>
-          <NextTopLoader color="#5750F1" showSpinner={false} />
-          <div className="min-h-screen bg-gray-2 dark:bg-[#020d1a]">
-            {children}
-          </div>
-        </Providers>
-      </body>
-    </html>
+    <Providers>
+      <NextTopLoader color="#5750F1" showSpinner={false} />
+      <div className="min-h-screen bg-gray-2 dark:bg-[#020d1a]">
+        {children}
+      </div>
+    </Providers>
   );
 }

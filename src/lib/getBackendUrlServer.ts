@@ -13,8 +13,12 @@ export function getBackendUrlServer(): string {
     return process.env.NEXT_PUBLIC_BACKEND_URL;
   }
 
-  // Check if deployed on Vercel
-  if (process.env.VERCEL || process.env.VERCEL_URL) {
+  // Check if deployed on Vercel (but still prefer env vars if set)
+  // Only use hardcoded URL if no env vars are set AND we're on Vercel
+  if ((process.env.VERCEL || process.env.VERCEL_URL) && !process.env.NEXT_PUBLIC_BACKEND_URL && !process.env.NEXT_PUBLIC_API_URL) {
+    // You should set NEXT_PUBLIC_BACKEND_URL in Vercel environment variables
+    // This is just a fallback - NOT recommended for production
+    console.warn('⚠️ Using hardcoded backend URL. Please set NEXT_PUBLIC_BACKEND_URL in Vercel environment variables.');
     return 'https://mern-stack-dtgy.vercel.app';
   }
 

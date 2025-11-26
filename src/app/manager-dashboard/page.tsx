@@ -71,6 +71,13 @@ interface ManagerProfile {
     averageResponseTime: number;
     lastActiveAt: string;
   };
+  assignedCustomers?: Array<{
+    _id: string;
+    companyName: string;
+    contactName: string;
+    email: string;
+    phone: string;
+  }>;
 }
 
 interface ManagerOrder {
@@ -82,6 +89,8 @@ interface ManagerOrder {
     email: string;
   } | null;
   status: string;
+  subtotal?: number;
+  tax?: number;
   total: number;
   totalDiscount?: number;
   finalTotal?: number;
@@ -201,6 +210,7 @@ export default function ManagerDashboard() {
       if (!token) {
         setMessage("❌ No authentication token found. Please login first.");
         setTimeout(() => setMessage(""), 5000);
+        setLoading(false);
         return;
       }
 
@@ -212,22 +222,47 @@ export default function ManagerDashboard() {
       });
 
       console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', response.headers);
+      console.log('📡 Response statusText:', response.statusText);
+      console.log('📡 Response ok:', response.ok);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Manager profile data:', data);
-        setProfile(data.manager);
+        console.log('✅ Manager profile response:', data);
+        console.log('✅ Manager data exists:', !!data.manager);
+        
+        if (data.manager) {
+          console.log('✅ Setting manager profile:', {
+            _id: data.manager._id,
+            user_id: data.manager.user_id,
+            categories: data.manager.assignedCategories?.length || 0
+          });
+          setProfile(data.manager);
+        } else {
+          console.error('❌ No manager data in response. Full response:', JSON.stringify(data, null, 2));
+          setMessage(`❌ No manager data in response. Response: ${JSON.stringify(data)}`);
+          setTimeout(() => setMessage(""), 10000);
+        }
       } else {
-        const errorData = await response.json();
-        console.error('❌ API Error:', errorData);
-        setMessage(`❌ API Error (${response.status}): ${errorData.message || 'Unknown error'}`);
-        setTimeout(() => setMessage(""), 5000);
+        let errorData;
+        try {
+          const text = await response.text();
+          console.error('❌ Error response text:', text);
+          errorData = JSON.parse(text);
+        } catch (e) {
+          errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        console.error('❌ API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        setMessage(`❌ API Error (${response.status}): ${errorData.message || errorData.error || 'Unknown error'}`);
+        setTimeout(() => setMessage(""), 10000);
       }
     } catch (error) {
       console.error('❌ Fetch Error:', error);
       setMessage(`❌ Fetch Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setTimeout(() => setMessage(""), 5000);
+      setTimeout(() => setMessage(""), 10000);
     }
   };
 
@@ -248,13 +283,19 @@ export default function ManagerDashboard() {
         console.log('📊 Orders received:', data.orders?.length || 0);
         console.log('📋 Orders list:', data.orders);
         
-        // Debug: Check order structure
+        // Debug: Check order structure and totals
         if (data.orders && data.orders.length > 0) {
-          console.log('🔍 First order structure:', {
-            orderNumber: data.orders[0].orderNumber,
-            customer: data.orders[0].customer,
-            status: data.orders[0].status,
-            categories: data.orders[0].categories
+          data.orders.forEach((order: any, index: number) => {
+            console.log(`📦 Order ${index + 1} (${order.orderNumber}):`, {
+              originalItemCount: order.originalItemCount,
+              filteredItemCount: order.filteredItemCount,
+              originalTotal: order.originalTotal ? `PKR ${order.originalTotal.toFixed(2)}` : 'N/A',
+              filteredTotal: order.total ? `PKR ${order.total.toFixed(2)}` : 'N/A',
+              filteredFinalTotal: order.finalTotal ? `PKR ${order.finalTotal.toFixed(2)}` : 'N/A',
+              discount: order.totalDiscount ? `PKR ${order.totalDiscount.toFixed(2)}` : 'None',
+              categories: order.categories,
+              items: order.items?.length || 0
+            });
           });
         }
         
@@ -594,12 +635,33 @@ export default function ManagerDashboard() {
         setDiscountValue("");
         setDiscountComments("");
       } else {
-        const errorData = await response.json();
-        setMessage(`❌ Error applying discount: ${errorData.message || 'Unknown error'}`);
+        // Try to parse error response
+        let errorData;
+        try {
+          const errorText = await response.text();
+          console.error('❌ Error response text:', errorText);
+          // Try to parse as JSON
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (e) {
+            // If not JSON, it might be HTML error page
+            errorData = { message: `Server error (${response.status}): ${response.statusText}` };
+          }
+        } catch (e) {
+          errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        console.error('❌ Error applying discount:', errorData);
+        setMessage(`❌ Error applying discount: ${errorData.message || errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error applying discount:', error);
-      setMessage(`❌ Error applying discount: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('❌ Error applying discount:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      // Check if it's a JSON parse error
+      if (errorMessage.includes('JSON') || errorMessage.includes('DOCTYPE')) {
+        setMessage(`❌ Error applying discount: Server returned invalid response. Please check if backend server is running.`);
+      } else {
+        setMessage(`❌ Error applying discount: ${errorMessage}`);
+      }
     }
   };
 
@@ -843,20 +905,38 @@ export default function ManagerDashboard() {
             You don't have a manager profile set up. Please contact your administrator.
           </p>
           
+          {/* Error Message Display */}
+          {message && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-left max-w-md mx-auto">
+              <h3 className="font-semibold text-red-800 mb-2">Error Details:</h3>
+              <p className="text-sm text-red-700">{message}</p>
+            </div>
+          )}
+          
           {/* Debug Information */}
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-left max-w-md mx-auto">
             <h3 className="font-semibold text-yellow-800 mb-2">Debug Information:</h3>
-            <p className="text-sm text-yellow-700 mb-2">Check browser console for detailed error logs.</p>
-            <p className="text-sm text-yellow-700 mb-2">If you're logged in as sales@ressichem.com, try:</p>
+            <p className="text-sm text-yellow-700 mb-2">Check browser console (F12) for detailed error logs.</p>
+            <p className="text-sm text-yellow-700 mb-2">Try these steps:</p>
             <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
+              <li>Check if backend server is running on port 5000</li>
               <li>Clear browser cache and cookies</li>
-              <li>Logout and login again</li>
-              <li>Check if backend server is running</li>
+              <li>Logout and login again to refresh your token</li>
               <li>Visit /debug-manager for detailed debugging</li>
             </ul>
           </div>
 
           <div className="space-x-4">
+            <button
+              onClick={() => {
+                setLoading(true);
+                fetchProfile();
+              }}
+              disabled={loading}
+              className="inline-flex items-center justify-center rounded-lg bg-green-500 px-6 py-3 text-center font-medium text-white hover:bg-green-600 disabled:opacity-50"
+            >
+              {loading ? "Retrying..." : "Retry"}
+            </button>
             <button
               onClick={() => router.push('/dashboard')}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-center font-medium text-white hover:bg-opacity-90"
@@ -1038,6 +1118,42 @@ export default function ManagerDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Assigned Customers */}
+            {profile.assignedCustomers && profile.assignedCustomers.length > 0 && (
+              <div className="mt-4 p-4 rounded-lg bg-white dark:bg-dark-2 border border-stroke dark:border-dark-3">
+                <h3 className="text-lg font-semibold text-dark dark:text-white mb-4">
+                  Your Assigned Customers ({profile.assignedCustomers.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {profile.assignedCustomers.map((customer) => (
+                    <div key={customer._id} className="border border-gray-200 dark:border-dark-3 rounded-lg p-3 hover:shadow-md transition-shadow">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                          <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-dark dark:text-white truncate">
+                            {customer.companyName}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                            {customer.contactName}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 truncate">
+                            {customer.email}
+                          </p>
+                          {customer.phone && (
+                            <p className="text-xs text-gray-500 dark:text-gray-500">
+                              📞 {customer.phone}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1196,19 +1312,45 @@ export default function ManagerDashboard() {
                         </td>
                         
                         <td className="px-4 py-4">
-                          {order.finalTotal ? (
-                            <div className="space-y-1">
-                              <div className="text-sm text-gray-500 line-through">PKR {order.total.toFixed(2)}</div>
-                              <div className="font-medium text-green-600 dark:text-green-400">PKR {order.finalTotal.toFixed(2)}</div>
-                              {order.totalDiscount && order.totalDiscount > 0 && (
-                                <div className="text-xs text-orange-600 dark:text-orange-400">
-                                  -PKR {order.totalDiscount.toFixed(2)} discount
-                                </div>
-                              )}
+                          <div className="space-y-1 text-sm">
+                            {/* Subtotal (Item Price) */}
+                            <div className="text-dark dark:text-white">
+                              <span className="text-gray-600 dark:text-gray-400">Items:</span> PKR {(order.subtotal || order.total || 0).toFixed(2)}
                             </div>
-                          ) : (
-                            <span className="font-medium text-dark dark:text-white">PKR {order.total.toFixed(2)}</span>
-                          )}
+                            
+                            {/* Tax Amount */}
+                            {order.tax !== undefined && order.tax > 0 && (
+                              <div className="text-blue-600 dark:text-blue-400">
+                                <span className="text-gray-600 dark:text-gray-400">Tax:</span> PKR {order.tax.toFixed(2)}
+                              </div>
+                            )}
+                            
+                            {/* Subtotal + Tax */}
+                            {order.subtotal !== undefined && (
+                              <div className="text-dark dark:text-white font-medium border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
+                                Subtotal: PKR {((order.subtotal || 0) + (order.tax || 0)).toFixed(2)}
+                              </div>
+                            )}
+                            
+                            {/* Discount Amount */}
+                            {order.totalDiscount && order.totalDiscount > 0 && (
+                              <div className="text-orange-600 dark:text-orange-400">
+                                <span className="text-gray-600 dark:text-gray-400">Discount:</span> -PKR {order.totalDiscount.toFixed(2)}
+                              </div>
+                            )}
+                            
+                            {/* Final Total */}
+                            <div className="font-semibold text-green-600 dark:text-green-400 border-t border-gray-300 dark:border-gray-600 pt-1 mt-1">
+                              Total: PKR {(order.finalTotal || order.total || 0).toFixed(2)}
+                            </div>
+                            
+                            {/* Show original total if different (for reference) */}
+                            {order.originalTotal && order.originalTotal !== order.total && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 italic">
+                                (Original: PKR {order.originalTotal.toFixed(2)})
+                              </div>
+                            )}
+                          </div>
                         </td>
                         
                         <td className="px-4 py-4">
@@ -1359,7 +1501,7 @@ export default function ManagerDashboard() {
                         </td>
                         
                         <td className="px-4 py-4">
-                          <span className="font-medium text-dark dark:text-white">${product.price.toFixed(2)}</span>
+                          <span className="font-medium text-dark dark:text-white">PKR {product.price.toFixed(2)}</span>
                         </td>
                         
                         <td className="px-4 py-4">
@@ -1427,16 +1569,104 @@ export default function ManagerDashboard() {
         {/* Order Status Update Modal */}
         {showOrderModal && selectedOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white dark:bg-dark-2 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="bg-white dark:bg-dark-2 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold text-dark dark:text-white mb-4">
-                Update Order Status
+                Order Details: {selectedOrder.orderNumber}
               </h3>
               
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-dark dark:text-white mb-2">
-                    Order: {selectedOrder.orderNumber}
-                  </label>
+                {/* Order Information */}
+                <div className="bg-gray-50 dark:bg-dark-3 rounded-lg p-4">
+                  <h4 className="font-semibold text-dark dark:text-white mb-3">Order Information</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Order Number:</span>
+                      <span className="ml-2 text-dark dark:text-white font-medium">{selectedOrder.orderNumber}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Customer:</span>
+                      <span className="ml-2 text-dark dark:text-white font-medium">{selectedOrder.customer?.companyName || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                      <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                        selectedOrder.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        selectedOrder.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>{selectedOrder.status}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Date:</span>
+                      <span className="ml-2 text-dark dark:text-white">{new Date(selectedOrder.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                {selectedOrder.items && selectedOrder.items.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-dark dark:text-white mb-3">Order Items ({selectedOrder.items.length})</h4>
+                    <div className="border border-stroke dark:border-dark-3 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 dark:bg-dark-3">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-400">Product</th>
+                            <th className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">Qty</th>
+                            <th className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">Unit Price</th>
+                            <th className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedOrder.items.map((item: any, index: number) => (
+                            <tr key={index} className="border-t border-stroke dark:border-dark-3">
+                              <td className="px-4 py-2 text-dark dark:text-white">
+                                {item.product?.name || 'N/A'}
+                              </td>
+                              <td className="px-4 py-2 text-right text-dark dark:text-white">{item.quantity}</td>
+                              <td className="px-4 py-2 text-right text-dark dark:text-white">PKR {item.unitPrice?.toFixed(2) || '0.00'}</td>
+                              <td className="px-4 py-2 text-right text-dark dark:text-white font-medium">PKR {((item.unitPrice || 0) * (item.quantity || 0)).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Price Breakdown */}
+                <div className="bg-gray-50 dark:bg-dark-3 rounded-lg p-4">
+                  <h4 className="font-semibold text-dark dark:text-white mb-3">Price Breakdown</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Items Subtotal:</span>
+                      <span className="text-dark dark:text-white font-medium">PKR {(selectedOrder.subtotal || selectedOrder.total || 0).toFixed(2)}</span>
+                    </div>
+                    {selectedOrder.tax !== undefined && selectedOrder.tax > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Tax:</span>
+                        <span className="text-blue-600 dark:text-blue-400 font-medium">PKR {selectedOrder.tax.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2">
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">Subtotal (Items + Tax):</span>
+                      <span className="text-dark dark:text-white font-semibold">PKR {((selectedOrder.subtotal || 0) + (selectedOrder.tax || 0)).toFixed(2)}</span>
+                    </div>
+                    {selectedOrder.totalDiscount && selectedOrder.totalDiscount > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Discount:</span>
+                        <span className="text-orange-600 dark:text-orange-400 font-medium">-PKR {selectedOrder.totalDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t-2 border-gray-300 dark:border-gray-500 pt-2">
+                      <span className="text-dark dark:text-white font-bold text-base">Final Total:</span>
+                      <span className="text-green-600 dark:text-green-400 font-bold text-base">PKR {(selectedOrder.finalTotal || selectedOrder.total || 0).toFixed(2)}</span>
+                    </div>
+                    {selectedOrder.originalTotal && selectedOrder.originalTotal !== selectedOrder.total && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400 italic mt-1">
+                        Note: Original order total was PKR {selectedOrder.originalTotal.toFixed(2)} (showing only items from your assigned categories)
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div>
@@ -1871,8 +2101,36 @@ export default function ManagerDashboard() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Order: {discountOrder.orderNumber}
                   </label>
-                  <div className="text-sm text-gray-500 mb-2">
-                    Total Amount: PKR {discountOrder.total.toFixed(2)}
+                </div>
+                
+                {/* Order Amount Breakdown */}
+                <div className="bg-gray-50 dark:bg-dark-3 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Order Amount Breakdown</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Items Subtotal:</span>
+                      <span className="text-gray-900 dark:text-white">PKR {(discountOrder.subtotal || discountOrder.total || 0).toFixed(2)}</span>
+                    </div>
+                    {discountOrder.tax !== undefined && discountOrder.tax > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Tax:</span>
+                        <span className="text-blue-600 dark:text-blue-400">PKR {discountOrder.tax.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1 mt-1">
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">Subtotal (Items + Tax):</span>
+                      <span className="text-gray-900 dark:text-white font-medium">PKR {((discountOrder.subtotal || 0) + (discountOrder.tax || 0)).toFixed(2)}</span>
+                    </div>
+                    {discountOrder.totalDiscount && discountOrder.totalDiscount > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Existing Discount:</span>
+                        <span className="text-orange-600 dark:text-orange-400">-PKR {discountOrder.totalDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t-2 border-gray-300 dark:border-gray-500 pt-1 mt-1">
+                      <span className="text-gray-900 dark:text-white font-bold">Current Total:</span>
+                      <span className="text-green-600 dark:text-green-400 font-bold">PKR {(discountOrder.finalTotal || discountOrder.total || 0).toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
                 
@@ -1882,16 +2140,28 @@ export default function ManagerDashboard() {
                   </label>
                   <input
                     type="number"
+                    step="0.01"
                     min="0"
-                    max={discountOrder.total}
                     value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const maxDiscount = discountOrder.finalTotal || discountOrder.total || 0;
+                      if (!val || parseFloat(val) <= maxDiscount) {
+                        setDiscountValue(val);
+                      }
+                    }}
+                    max={discountOrder.finalTotal || discountOrder.total || 0}
                     className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     placeholder="Enter discount amount"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Maximum discount: PKR {discountOrder.total.toFixed(2)}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Maximum discount: PKR {(discountOrder.finalTotal || discountOrder.total || 0).toFixed(2)}
                   </p>
+                  {discountOrder.originalTotal && discountOrder.originalTotal !== discountOrder.total && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      ℹ️ Note: This discount applies to your assigned category items only (PKR {discountOrder.total.toFixed(2)} of PKR {discountOrder.originalTotal.toFixed(2)} total order)
+                    </p>
+                  )}
                 </div>
                 
                 <div>
@@ -1913,11 +2183,18 @@ export default function ManagerDashboard() {
                     <h5 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
                       💡 Discount Preview
                     </h5>
-                    <div className="text-sm text-blue-700 dark:text-blue-300">
-                      <div>Original Total: PKR {discountOrder.total.toFixed(2)}</div>
-                      <div>Discount: -PKR {parseFloat(discountValue || "0").toFixed(2)}</div>
-                      <div className="font-semibold border-t border-blue-200 dark:border-blue-700 pt-1 mt-1">
-                        Final Total: PKR {(discountOrder.total - parseFloat(discountValue || "0")).toFixed(2)}
+                    <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                      <div className="flex justify-between">
+                        <span>Current Total:</span>
+                        <span>PKR {(discountOrder.finalTotal || discountOrder.total || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Discount:</span>
+                        <span className="text-orange-600 dark:text-orange-400">-PKR {parseFloat(discountValue || "0").toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold border-t border-blue-200 dark:border-blue-700 pt-1 mt-1">
+                        <span>Final Total:</span>
+                        <span className="text-green-600 dark:text-green-400">PKR {((discountOrder.finalTotal || discountOrder.total || 0) - parseFloat(discountValue || "0")).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

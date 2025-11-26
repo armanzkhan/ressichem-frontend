@@ -155,8 +155,8 @@ export default function InvoicesPage() {
         queryParams.append('dateTo', filter.dateTo);
         console.log('   Date To filter:', filter.dateTo);
       }
-      // For customers, request all invoices (use high limit)
-      if (user?.isCustomer) {
+      // For customers and company admins, request all invoices (use high limit)
+      if (user?.isCustomer || user?.isCompanyAdmin || user?.isSuperAdmin) {
         queryParams.append('limit', '1000');
       }
       

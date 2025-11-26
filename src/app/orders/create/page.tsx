@@ -53,6 +53,9 @@ export default function CreateOrderPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [managerProfile, setManagerProfile] = useState<any>(null);
+  const [customerAssignedManagers, setCustomerAssignedManagers] = useState<any[]>([]);
+  const [customerManagerCategories, setCustomerManagerCategories] = useState<string[]>([]);
+  const [customerManagerDetails, setCustomerManagerDetails] = useState<any[]>([]); // Store manager details for display
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -82,8 +85,24 @@ export default function CreateOrderPage() {
 
   // Get products for display - show ALL products for customers, filtered for managers
   const getFilteredProducts = () => {
-    // For customers: ALWAYS show all products regardless of category selection
+    // For customers: filter by assigned managers' categories if managers are assigned
     if (user?.userType === 'customer' || user?.isCustomer) {
+      // If customer has assigned managers, filter products by their categories
+      if (customerManagerCategories.length > 0) {
+        return products.filter(product => {
+          if (product.category && typeof product.category === 'object' && product.category.mainCategory) {
+            const mainCategory = product.category.mainCategory;
+            // Check if product's category matches any of the assigned managers' categories
+            return customerManagerCategories.some(assignedCat => {
+              return assignedCat === mainCategory || 
+                     assignedCat.includes(mainCategory) || 
+                     mainCategory.includes(assignedCat);
+            });
+          }
+          return false;
+        });
+      }
+      // If no managers assigned, show all products
       return products;
     }
     
@@ -249,6 +268,96 @@ export default function CreateOrderPage() {
       fetchCustomerStatistics();
     }
   }, [user, userLoading, router]);
+
+  // Fetch customer's assigned managers and their categories
+  const fetchCustomerAssignedManagers = async (customerId: string) => {
+    try {
+      console.log('👥 Fetching assigned managers for customer:', customerId);
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // Fetch customer details which should include assignedManagers
+      const customerRes = await fetch(`/api/customers/${customerId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (customerRes.ok) {
+        const customerData = await customerRes.json();
+        console.log('👥 Customer data:', customerData);
+        
+        const assignedManagers = customerData.assignedManagers || [];
+        setCustomerAssignedManagers(assignedManagers);
+        
+        if (assignedManagers.length > 0) {
+          // Fetch manager details to get their assigned categories
+          const managerIds = assignedManagers
+            .map((am: any) => am.manager_id)
+            .filter(Boolean);
+          
+          console.log('👥 Manager IDs to fetch:', managerIds);
+          
+          if (managerIds.length > 0) {
+            // Fetch all managers and filter by IDs
+            const managersRes = await fetch('/api/managers/all', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (managersRes.ok) {
+              const managersData = await managersRes.json();
+              const allManagers = Array.isArray(managersData) ? managersData : managersData.managers || [];
+              
+              // Find managers that match the assigned manager IDs
+              const relevantManagers = allManagers.filter((m: any) => 
+                managerIds.some((id: string) => {
+                  const managerId = typeof id === 'object' ? id._id || id : id;
+                  return String(m._id) === String(managerId) || String(m.user_id) === String(managerId);
+                })
+              );
+              
+              console.log('👥 Relevant managers found:', relevantManagers.length);
+              
+              // Store manager details for display
+              setCustomerManagerDetails(relevantManagers);
+              
+              // Extract all categories from assigned managers
+              const allCategories = new Set<string>();
+              relevantManagers.forEach((manager: any) => {
+                const categories = manager.assignedCategories || [];
+                categories.forEach((cat: any) => {
+                  const categoryName = typeof cat === 'string' ? cat : (cat.category || cat.name || '');
+                  if (categoryName) {
+                    allCategories.add(categoryName);
+                  }
+                });
+              });
+              
+              const categoriesArray = Array.from(allCategories);
+              setCustomerManagerCategories(categoriesArray);
+              console.log('📦 Customer can order from categories:', categoriesArray);
+            }
+          } else {
+            setCustomerManagerCategories([]);
+          }
+        } else {
+          setCustomerAssignedManagers([]);
+          setCustomerManagerCategories([]);
+          setCustomerManagerDetails([]);
+          console.log('👥 No managers assigned to customer');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error fetching customer assigned managers:', error);
+      setCustomerAssignedManagers([]);
+      setCustomerManagerCategories([]);
+      setCustomerManagerDetails([]);
+    }
+  };
 
   // Fetch customer order statistics and outstanding balance
   const fetchCustomerStatistics = async (customerId?: string) => {
@@ -589,6 +698,8 @@ export default function CreateOrderPage() {
         setCustomerNotFound(false);
         // Fetch statistics after customer is set
         fetchCustomerStatistics(customerId);
+        // Fetch assigned managers for customer
+        fetchCustomerAssignedManagers(customerId);
         return;
       }
       
@@ -610,6 +721,8 @@ export default function CreateOrderPage() {
           customerFound = true;
           // Fetch statistics after customer is set
           fetchCustomerStatistics(customerId);
+          // Fetch assigned managers for customer
+          fetchCustomerAssignedManagers(customerId);
         } else {
           console.log('⚠️ Customer not found in customers list for:', user.email);
         }
@@ -648,6 +761,8 @@ export default function CreateOrderPage() {
               });
               // Fetch statistics after customer is set
               fetchCustomerStatistics(customerId);
+              // Fetch assigned managers for customer
+              fetchCustomerAssignedManagers(customerId);
               return;
             } else {
               console.warn('⚠️ Dashboard API returned no customer data');
@@ -685,10 +800,18 @@ export default function CreateOrderPage() {
     }
   }, [user, customers, formData.customer, loading]);
 
-  // Refetch statistics when customer changes
+  // Refetch statistics and managers when customer changes
   useEffect(() => {
-    if (user?.isCustomer && formData.customer) {
-      fetchCustomerStatistics(formData.customer);
+    if (formData.customer) {
+      if (user?.isCustomer) {
+        fetchCustomerStatistics(formData.customer);
+      }
+      fetchCustomerAssignedManagers(formData.customer);
+    } else {
+      // Clear managers when no customer selected
+      setCustomerAssignedManagers([]);
+      setCustomerManagerCategories([]);
+      setCustomerManagerDetails([]);
     }
   }, [formData.customer, user?.isCustomer]);
 
@@ -1147,6 +1270,68 @@ export default function CreateOrderPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Assigned Managers */}
+                      {user?.isCustomer && customerManagerDetails.length > 0 && (
+                        <div className="pt-6 border-t border-stroke dark:border-dark-3">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                              <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                            </div>
+                            <h5 className="text-sm font-semibold text-dark dark:text-white">Your Assigned Manager{customerManagerDetails.length > 1 ? 's' : ''}</h5>
+                          </div>
+                          <div className="space-y-2">
+                            {customerManagerDetails.map((manager, index) => {
+                              const managerName = `${manager.firstName || ''} ${manager.lastName || ''}`.trim() || manager.email || 'Unknown Manager';
+                              const managerCategories = manager.assignedCategories || [];
+                              const categoryNames = Array.isArray(managerCategories)
+                                ? managerCategories.map((cat: any) => typeof cat === 'string' ? cat : (cat.category || cat.name || '')).filter(Boolean)
+                                : [];
+                              
+                              return (
+                                <div key={index} className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 p-3">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <p className="font-medium text-purple-900 dark:text-purple-100 text-sm">
+                                        {managerName}
+                                      </p>
+                                      {manager.email && (
+                                        <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                                          {manager.email}
+                                        </p>
+                                      )}
+                                      {categoryNames.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1">
+                                          {categoryNames.slice(0, 3).map((cat: string, catIndex: number) => (
+                                            <span
+                                              key={catIndex}
+                                              className="inline-flex items-center rounded-full bg-purple-100 dark:bg-purple-800 px-2 py-0.5 text-xs font-medium text-purple-800 dark:text-purple-200"
+                                            >
+                                              {cat}
+                                            </span>
+                                          ))}
+                                          {categoryNames.length > 3 && (
+                                            <span className="inline-flex items-center rounded-full bg-purple-100 dark:bg-purple-800 px-2 py-0.5 text-xs font-medium text-purple-800 dark:text-purple-200">
+                                              +{categoryNames.length - 3} more
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {customerManagerCategories.length > 0 && (
+                            <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
+                              💡 You can order products from {customerManagerCategories.length} categor{customerManagerCategories.length === 1 ? 'y' : 'ies'}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

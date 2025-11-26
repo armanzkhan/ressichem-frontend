@@ -20,6 +20,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
+        <section
+          ref={null}
+          aria-label="Notifications alt+T"
+          tabIndex={-1}
+          aria-live="polite"
+          aria-relevant="additions text"
+          aria-atomic="false"
+          suppressHydrationWarning={true}
+        />
         <ClientLayout>
           {children}
         </ClientLayout>
