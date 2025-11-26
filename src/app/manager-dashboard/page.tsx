@@ -94,6 +94,7 @@ interface ManagerOrder {
   total: number;
   totalDiscount?: number;
   finalTotal?: number;
+  originalTotal?: number;
   items: any[];
   categories: string[];
   createdAt: string;
