@@ -4,12 +4,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:50
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    const { id } = params;
+    const { id } = await params;
 
     const response = await fetch(`${API_BASE_URL}/api/customers/${id}`, {
       method: 'GET',
