@@ -108,20 +108,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
         isCustomer: freshUser.isCustomer
       });
       
-      setUser(prevUser => ({
+      const updatedUser: User = {
         ...prevUser,
         ...freshUser,
         // Ensure isSuperAdmin is properly set
         isSuperAdmin: freshUser.isSuperAdmin || false,
-        // Ensure roles are unique
+        // Ensure roles are unique and always an array
         roles: [...new Set(roles)],
-        // Ensure permissions are unique
+        // Ensure permissions are unique and always an array (never undefined)
         permissions: [...new Set(permissions)],
-        // Ensure permissionGroups are unique
+        // Ensure permissionGroups are unique and always an array
         permissionGroups: [...new Set((freshUser.permissionGroups || []).map((pg: any) => 
           typeof pg === 'string' ? pg : (pg.name || pg._id || String(pg))
         ).filter(Boolean))]
-      }));
+      };
+      
+      // Ensure permissions is never undefined
+      if (!updatedUser.permissions) {
+        updatedUser.permissions = [];
+      }
+      
+      setUser(updatedUser);
     } catch (error: any) {
       console.error("Failed to refresh user:", error);
       // Check if it's a 401 (Unauthorized) or 403 (Forbidden) - token expired/invalid
@@ -177,15 +184,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
           return;
         }
         // Set basic user info from token immediately for faster redirects
-        setUser({
+        const initialUser: User = {
           user_id: decoded.user_id,
           company_id: decoded.company_id,
           roles: [...new Set((decoded.roles || []) as string[])], // Ensure roles are unique
-          permissions: [],
+          permissions: [], // Always initialize as empty array, never undefined
           permissionGroups: [],
           isSuperAdmin: decoded.isSuperAdmin || false, // Use actual value from token
           email: decoded.email || "",
-        });
+        };
+        setUser(initialUser);
         // Mark as initialized immediately to allow redirects
         setIsInitialized(true);
         setLoading(false);

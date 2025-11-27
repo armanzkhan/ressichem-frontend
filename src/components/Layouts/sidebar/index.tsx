@@ -49,11 +49,11 @@ export function Sidebar() {
         return false;
       }
 
-      // Debug logging
-      if (item.title === "Customer Management") {
+      // Debug logging (only when user is loaded)
+      if (item.title === "Customer Management" && user) {
         console.log('🔍 Customer Management menu item check:');
         console.log('  - Permission required:', item.permission);
-        console.log('  - User permissions:', user?.permissions);
+        console.log('  - User permissions:', user.permissions || []);
         console.log('  - Has permission:', item.permission ? hasPermission(item.permission) : 'N/A');
         console.log('  - Is super admin:', isSuperAdmin());
         console.log('  - Is company admin:', isCompanyAdmin());
