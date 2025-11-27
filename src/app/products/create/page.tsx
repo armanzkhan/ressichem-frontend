@@ -79,7 +79,7 @@ export default function CreateProductPage() {
               const products = Array.isArray(productsData) ? productsData : productsData.products || [];
               
               // Extract unique categories from products
-              const categoryStrings = products
+              const categoryStrings: string[] = products
                 .map((p: any) => typeof p.category === 'string' ? p.category : p.category?.mainCategory || null)
                 .filter((cat: string | null): cat is string => Boolean(cat));
               const uniqueCategories: string[] = [...new Set(categoryStrings)];
