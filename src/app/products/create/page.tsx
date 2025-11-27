@@ -79,12 +79,12 @@ export default function CreateProductPage() {
               const products = Array.isArray(productsData) ? productsData : productsData.products || [];
               
               // Extract unique categories from products
-              const uniqueCategories = [...new Set(products.map((p: any) => 
+              const uniqueCategories: string[] = [...new Set(products.map((p: any) => 
                 typeof p.category === 'string' ? p.category : p.category?.mainCategory || null
-              ).filter(Boolean))];
+              ).filter((cat): cat is string => Boolean(cat)))];
               
               if (uniqueCategories.length > 0) {
-                categoriesData = uniqueCategories.map((name: string) => ({ name }));
+                categoriesData = uniqueCategories.map((name) => ({ name }));
                 console.log('Categories extracted from products:', categoriesData);
               }
             }
