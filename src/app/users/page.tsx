@@ -126,7 +126,7 @@ export default function UsersPage() {
       
       // If searching for "manager", only show actual managers (exclude customers)
       if (searchLowerTrimmed === 'manager' || searchLowerTrimmed === 'managers') {
-        const isActuallyManager = user.isManager === true || user.role === 'Manager' || user.managerProfile?.manager_id;
+        const isActuallyManager = Boolean(user.isManager === true || user.role === 'Manager' || user.managerProfile?.manager_id);
         const isNotCustomer = user.isCustomer !== true; // Exclude if user is marked as customer
         matchesRoleFromSearch = isActuallyManager && isNotCustomer;
         // If search term is "manager" but user is not a manager or is a customer, don't show
@@ -136,7 +136,7 @@ export default function UsersPage() {
       }
       // If searching for "customer", only show actual customers
       else if (searchLowerTrimmed === 'customer' || searchLowerTrimmed === 'customers') {
-        matchesRoleFromSearch = user.isCustomer === true || user.role === 'Customer' || user.customerProfile?.customer_id;
+        matchesRoleFromSearch = Boolean(user.isCustomer === true || user.role === 'Customer' || user.customerProfile?.customer_id);
         // If search term is "customer" but user is not a customer, don't show even if name matches
         if (!matchesRoleFromSearch) {
           return false;
@@ -168,7 +168,7 @@ export default function UsersPage() {
         // When filtering for Manager, ensure user is actually a manager AND NOT a customer
         // Priority: If user has isCustomer flag set to true, exclude them from manager list
         // even if they're also a manager (users can't be both in the filter)
-        const isActuallyManager = (user.role === 'Manager' || user.isManager === true || user.managerProfile?.manager_id);
+        const isActuallyManager = Boolean(user.role === 'Manager' || user.isManager === true || user.managerProfile?.manager_id);
         // Exclude if user is marked as customer (isCustomer flag takes priority)
         const isNotCustomer = user.isCustomer !== true;
         matchesRole = isActuallyManager && isNotCustomer;
