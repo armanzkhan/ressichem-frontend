@@ -156,13 +156,13 @@ export default function UsersPage() {
     let matchesRole = true;
     if (filterRole) {
       if (filterRole === 'Company Admin') {
-        matchesRole = (user.role === 'Company Admin' || user.isCompanyAdmin || user.department === 'Administration') && 
+        matchesRole = Boolean(user.role === 'Company Admin' || user.isCompanyAdmin || user.department === 'Administration') && 
                      !user.isCustomer && !user.isManager;
       } else if (filterRole === 'Super Admin') {
-        matchesRole = (user.role === 'Super Admin' || user.isSuperAdmin) && 
+        matchesRole = Boolean(user.role === 'Super Admin' || user.isSuperAdmin) && 
                      !user.isCustomer && !user.isManager;
       } else if (filterRole === 'Customer') {
-        matchesRole = (user.role === 'Customer' || user.isCustomer || user.customerProfile?.customer_id) && 
+        matchesRole = Boolean(user.role === 'Customer' || user.isCustomer || user.customerProfile?.customer_id) && 
                      !user.isManager && !user.isCompanyAdmin && !user.isSuperAdmin;
       } else if (filterRole === 'Manager') {
         // When filtering for Manager, ensure user is actually a manager AND NOT a customer
