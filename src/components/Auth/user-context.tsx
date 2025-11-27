@@ -108,27 +108,29 @@ export function UserProvider({ children }: { children: ReactNode }) {
         isCustomer: freshUser.isCustomer
       });
       
-      const updatedUser: User = {
-        ...prevUser,
-        ...freshUser,
-        // Ensure isSuperAdmin is properly set
-        isSuperAdmin: freshUser.isSuperAdmin || false,
-        // Ensure roles are unique and always an array
-        roles: [...new Set(roles)],
-        // Ensure permissions are unique and always an array (never undefined)
-        permissions: [...new Set(permissions)],
-        // Ensure permissionGroups are unique and always an array
-        permissionGroups: [...new Set((freshUser.permissionGroups || []).map((pg: any) => 
-          typeof pg === 'string' ? pg : (pg.name || pg._id || String(pg))
-        ).filter(Boolean))]
-      };
-      
-      // Ensure permissions is never undefined
-      if (!updatedUser.permissions) {
-        updatedUser.permissions = [];
-      }
-      
-      setUser(updatedUser);
+      setUser((prevUser) => {
+        const updatedUser: User = {
+          ...prevUser,
+          ...freshUser,
+          // Ensure isSuperAdmin is properly set
+          isSuperAdmin: freshUser.isSuperAdmin || false,
+          // Ensure roles are unique and always an array
+          roles: [...new Set(roles)],
+          // Ensure permissions are unique and always an array (never undefined)
+          permissions: [...new Set(permissions)],
+          // Ensure permissionGroups are unique and always an array
+          permissionGroups: [...new Set((freshUser.permissionGroups || []).map((pg: any) => 
+            typeof pg === 'string' ? pg : (pg.name || pg._id || String(pg))
+          ).filter(Boolean))]
+        };
+        
+        // Ensure permissions is never undefined
+        if (!updatedUser.permissions) {
+          updatedUser.permissions = [];
+        }
+        
+        return updatedUser;
+      });
     } catch (error: any) {
       console.error("Failed to refresh user:", error);
       // Check if it's a 401 (Unauthorized) or 403 (Forbidden) - token expired/invalid
