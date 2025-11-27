@@ -314,8 +314,8 @@ export default function CreateOrderPage() {
               
               // Find managers that match the assigned manager IDs
               const relevantManagers = allManagers.filter((m: any) => 
-                managerIds.some((id: string) => {
-                  const managerId = typeof id === 'object' ? id._id || id : id;
+                managerIds.some((id: any) => {
+                  const managerId = typeof id === 'object' && id !== null ? (id._id || id) : id;
                   return String(m._id) === String(managerId) || String(m.user_id) === String(managerId);
                 })
               );
