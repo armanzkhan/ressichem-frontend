@@ -76,18 +76,51 @@ export function UserProvider({ children }: { children: ReactNode }) {
       });
       
       // Update user with fresh data, replacing previous state
-      const freshUser = (response.data as any).data as User;
+      const responseData = response.data as any;
+      const freshUser = responseData.data || responseData as User;
+      
+      // Extract permissions - handle both string arrays and object arrays
+      let permissions: string[] = [];
+      if (freshUser.permissions) {
+        if (Array.isArray(freshUser.permissions)) {
+          permissions = freshUser.permissions.map((p: any) => 
+            typeof p === 'string' ? p : (p.key || p._id || String(p))
+          ).filter(Boolean);
+        }
+      }
+      
+      // Extract roles - handle both string arrays and object arrays
+      let roles: string[] = [];
+      if (freshUser.roles) {
+        if (Array.isArray(freshUser.roles)) {
+          roles = freshUser.roles.map((r: any) => 
+            typeof r === 'string' ? r : (r.name || r._id || String(r))
+          ).filter(Boolean);
+        }
+      }
+      
+      console.log('✅ User context - Refreshed user data:', {
+        email: freshUser.email,
+        permissionsCount: permissions.length,
+        rolesCount: roles.length,
+        isSuperAdmin: freshUser.isSuperAdmin,
+        isManager: freshUser.isManager,
+        isCustomer: freshUser.isCustomer
+      });
+      
       setUser(prevUser => ({
         ...prevUser,
         ...freshUser,
         // Ensure isSuperAdmin is properly set
         isSuperAdmin: freshUser.isSuperAdmin || false,
         // Ensure roles are unique
-        roles: [...new Set(freshUser.roles || [])],
+        roles: [...new Set(roles)],
         // Ensure permissions are unique
-        permissions: [...new Set(freshUser.permissions || [])],
+        permissions: [...new Set(permissions)],
         // Ensure permissionGroups are unique
-        permissionGroups: [...new Set(freshUser.permissionGroups || [])]
+        permissionGroups: [...new Set((freshUser.permissionGroups || []).map((pg: any) => 
+          typeof pg === 'string' ? pg : (pg.name || pg._id || String(pg))
+        ).filter(Boolean))]
       }));
     } catch (error: any) {
       console.error("Failed to refresh user:", error);
