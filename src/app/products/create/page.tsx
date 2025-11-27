@@ -79,9 +79,10 @@ export default function CreateProductPage() {
               const products = Array.isArray(productsData) ? productsData : productsData.products || [];
               
               // Extract unique categories from products
-              const uniqueCategories: string[] = [...new Set(products.map((p: any) => 
-                typeof p.category === 'string' ? p.category : p.category?.mainCategory || null
-              ).filter((cat): cat is string => Boolean(cat)))];
+              const categoryStrings = products
+                .map((p: any) => typeof p.category === 'string' ? p.category : p.category?.mainCategory || null)
+                .filter((cat): cat is string => Boolean(cat));
+              const uniqueCategories: string[] = [...new Set(categoryStrings)];
               
               if (uniqueCategories.length > 0) {
                 categoriesData = uniqueCategories.map((name) => ({ name }));
