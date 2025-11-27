@@ -106,7 +106,7 @@ export default function CreateProductPage() {
           }
           
           // Extract category names
-          const categoryNames = categoriesList
+          const categoryNames: string[] = categoriesList
             .map((cat: any) => {
               // Handle different possible structures
               if (typeof cat === 'string') {
@@ -117,7 +117,7 @@ export default function CreateProductPage() {
             .filter((name: string | null): name is string => Boolean(name));
           
           // Remove duplicates and sort
-          const uniqueCategoryNames = [...new Set(categoryNames)].sort();
+          const uniqueCategoryNames: string[] = [...new Set(categoryNames)].sort();
           
           console.log('Final category names:', uniqueCategoryNames);
           setCategories(uniqueCategoryNames);
