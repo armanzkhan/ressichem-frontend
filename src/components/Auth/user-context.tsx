@@ -243,11 +243,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     if (user.isSuperAdmin) return true;
+    
+    // Company Admins should have access to most admin functions
+    if (user.isCompanyAdmin) {
+      // Allow access to all user management permissions
+      if (permission.startsWith('users.')) return true;
+      // Allow access to other common admin permissions
+      const adminPermissions = [
+        'customers.read', 'customers.create', 'customers.update', 'customers.delete',
+        'orders.read', 'orders.create', 'orders.update', 'orders.delete',
+        'products.read', 'products.create', 'products.update', 'products.delete',
+        'managers.read', 'managers.create', 'managers.update', 'managers.delete',
+        'categories.read', 'categories.create', 'categories.update', 'categories.delete',
+        'invoices.read', 'invoices.create', 'invoices.update', 'invoices.delete',
+        'notifications.read', 'notifications.create', 'notifications.update', 'notifications.delete',
+        'dashboard.view', 'admin.dashboard', 'admin.settings'
+      ];
+      if (adminPermissions.includes(permission)) return true;
+    }
+    
     // For customer users, allow basic permissions even if not loaded yet
     if (user.isCustomer) {
       const customerPermissions = ['orders.read', 'orders.create', 'products.read', 'invoices.read', 'notifications.read'];
       if (customerPermissions.includes(permission)) return true;
     }
+    
     return user.permissions?.includes(permission) || false;
   };
 
