@@ -105,33 +105,36 @@ export default function InvoicesPage() {
   useEffect(() => {
     if (user) {
       fetchInvoices();
-      fetchInvoiceStats();
+      // For managers we calculate stats on the client from their filtered invoices
+      if (!user.isManager) {
+        fetchInvoiceStats();
+      }
     }
   }, [user, filter]);
 
-  // Recalculate stats for customers when invoices change
+  // Recalculate stats for scoped users (customers and managers) when invoices change
   useEffect(() => {
-    if (user?.isCustomer) {
-      const customerInvoices = invoices;
+    if (user?.isCustomer || user?.isManager) {
+      const scopedInvoices = invoices;
       const calculatedStats = {
-        totalInvoices: customerInvoices.length,
-        totalAmount: customerInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0),
-        paidAmount: customerInvoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0),
-        pendingAmount: customerInvoices.reduce((sum, inv) => sum + (inv.remainingAmount || 0), 0),
-        draftInvoices: customerInvoices.filter(inv => inv.status === 'draft').length,
-        sentInvoices: customerInvoices.filter(inv => inv.status === 'sent').length,
-        paidInvoices: customerInvoices.filter(inv => inv.status === 'paid').length,
-        overdueInvoices: customerInvoices.filter(inv => {
+        totalInvoices: scopedInvoices.length,
+        totalAmount: scopedInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0),
+        paidAmount: scopedInvoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0),
+        pendingAmount: scopedInvoices.reduce((sum, inv) => sum + (inv.remainingAmount || 0), 0),
+        draftInvoices: scopedInvoices.filter(inv => inv.status === 'draft').length,
+        sentInvoices: scopedInvoices.filter(inv => inv.status === 'sent').length,
+        paidInvoices: scopedInvoices.filter(inv => inv.status === 'paid').length,
+        overdueInvoices: scopedInvoices.filter(inv => {
           if (inv.status === 'paid' || inv.status === 'cancelled') return false;
           const dueDate = new Date(inv.dueDate);
           return dueDate < new Date();
         }).length
       };
       
-      console.log('   📊 Calculated customer invoice stats:', calculatedStats);
+      console.log('   📊 Calculated scoped invoice stats (customer/manager):', calculatedStats);
       setInvoiceStats(calculatedStats);
     }
-  }, [invoices, user?.isCustomer]);
+  }, [invoices, user?.isCustomer, user?.isManager]);
 
   const fetchInvoices = async () => {
     try {

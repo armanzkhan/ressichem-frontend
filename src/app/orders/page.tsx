@@ -111,11 +111,18 @@ function OrdersPageContent() {
       console.log('   User loading:', userLoading);
       console.log('   Is customer:', user?.isCustomer);
       
-      // Use customer-specific endpoint if user is a customer
-      let apiEndpoint = user?.isCustomer ? '/api/customers/orders' : '/api/orders';
-      // For customer orders, request all orders (use high limit)
+      // Choose endpoint based on user type
+      let apiEndpoint: string;
+
       if (user?.isCustomer) {
+        // Customers: fetch their own orders with a high limit
         apiEndpoint = '/api/customers/orders?limit=1000&page=1';
+      } else if (user?.isManager && !user?.isCompanyAdmin && !user?.isSuperAdmin) {
+        // Managers: fetch only orders for their assigned categories
+        apiEndpoint = '/api/managers/orders?limit=1000&page=1';
+      } else {
+        // Admin / staff: company-wide orders
+        apiEndpoint = '/api/orders';
       }
       console.log('   Using API endpoint:', apiEndpoint);
       
