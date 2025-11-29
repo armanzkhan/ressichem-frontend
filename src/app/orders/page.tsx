@@ -237,20 +237,40 @@ function OrdersPageContent() {
       
       // If manager has assigned categories, verify the order matches (safety check)
       if (managerCategories.length > 0) {
-        // Check if order has categories matching manager's assigned categories
-        const orderHasMatchingCategories = order.categories && order.categories.some(cat => 
-          managerCategories.includes(cat)
-        );
+        // Normalize category names to handle "&" vs "and" variations (same as backend)
+        const normalizeCategory = (cat: string): string => {
+          if (!cat || typeof cat !== 'string') return '';
+          return cat.toLowerCase().trim()
+            .replace(/\s*&\s*/g, ' and ')
+            .replace(/\s+/g, ' ');
+        };
         
-        // Check if any product in the order matches manager's categories
+        const normalizedManagerCategories = managerCategories.map(cat => normalizeCategory(cat));
+        
+        // Check if order has categories matching manager's assigned categories (normalized)
+        const orderHasMatchingCategories = order.categories && order.categories.some(orderCat => {
+          const normalizedOrderCat = normalizeCategory(orderCat);
+          return normalizedManagerCategories.some(normalizedManagerCat =>
+            normalizedOrderCat === normalizedManagerCat ||
+            normalizedOrderCat.includes(normalizedManagerCat) ||
+            normalizedManagerCat.includes(normalizedOrderCat)
+          );
+        });
+        
+        // Check if any product in the order matches manager's categories (normalized)
         const orderHasMatchingProducts = order.items && order.items.some(item => {
           if (item.product?.category) {
             const productCategory = item.product.category;
-            return managerCategories.some(managerCat => 
-              productCategory.mainCategory === managerCat ||
-              productCategory.subCategory === managerCat ||
-              productCategory.subSubCategory === managerCat ||
-              (typeof productCategory === 'string' && productCategory.includes(managerCat))
+            const productCatStr = typeof productCategory === 'string' 
+              ? productCategory 
+              : (productCategory?.mainCategory || '');
+            if (!productCatStr) return false;
+            
+            const normalizedProductCat = normalizeCategory(productCatStr);
+            return normalizedManagerCategories.some(normalizedManagerCat =>
+              normalizedProductCat === normalizedManagerCat ||
+              normalizedProductCat.includes(normalizedManagerCat) ||
+              normalizedManagerCat.includes(normalizedProductCat)
             );
           }
           return false;
@@ -1094,22 +1114,40 @@ function OrdersPageContent() {
                 
                 if (user?.isManager && user?.managerProfile?.assignedCategories) {
                   const managerCategories = user.managerProfile.assignedCategories;
+                  
+                  // Normalize category names to handle "&" vs "and" variations (same as backend)
+                  const normalizeCategory = (cat: string): string => {
+                    if (!cat || typeof cat !== 'string') return '';
+                    return cat.toLowerCase().trim()
+                      .replace(/\s*&\s*/g, ' and ')
+                      .replace(/\s+/g, ' ');
+                  };
+                  
+                  // Normalize manager categories once
+                  const normalizedManagerCategories = managerCategories.map(cat => normalizeCategory(cat));
+                  
                   displayItems = selectedOrder.items.filter(item => {
                     if (!item.product?.category) return false;
                     
                     const productCategory = item.product.category;
-                    // Check if product category matches manager's assigned categories
-                    return managerCategories.some(managerCat => {
-                      if (typeof productCategory === 'string') {
-                        return productCategory.includes(managerCat) || managerCat.includes(productCategory);
-                      }
-                      return (
-                        productCategory.mainCategory === managerCat ||
-                        productCategory.subCategory === managerCat ||
-                        productCategory.subSubCategory === managerCat ||
-                        (productCategory.mainCategory && productCategory.mainCategory.includes(managerCat)) ||
-                        (productCategory.subCategory && productCategory.subCategory.includes(managerCat))
-                      );
+                    // Get the main category string
+                    const productCatStr = typeof productCategory === 'string' 
+                      ? productCategory 
+                      : (productCategory?.mainCategory || '');
+                    
+                    if (!productCatStr) return false;
+                    
+                    // Normalize product category
+                    const normalizedProductCat = normalizeCategory(productCatStr);
+                    
+                    // Check if normalized product category matches any normalized manager category
+                    return normalizedManagerCategories.some(normalizedManagerCat => {
+                      // Exact match after normalization
+                      if (normalizedProductCat === normalizedManagerCat) return true;
+                      // Contains check (for partial matches)
+                      if (normalizedProductCat.includes(normalizedManagerCat) || 
+                          normalizedManagerCat.includes(normalizedProductCat)) return true;
+                      return false;
                     });
                   });
                 }
