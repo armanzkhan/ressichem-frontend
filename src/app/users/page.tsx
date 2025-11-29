@@ -375,13 +375,9 @@ export default function UsersPage() {
                       className="w-full rounded-md sm:rounded-lg lg:rounded-xl border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-3 pr-6 sm:pr-8 lg:pr-10 text-gray-900 focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/50 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-400 appearance-none transition-all duration-300 text-xs sm:text-sm lg:text-base"
                     >
                       <option value="">All Roles</option>
-                      <option value="Super Admin">Super Admin</option>
                       <option value="Company Admin">Company Admin</option>
                       <option value="Customer">Customer</option>
                       <option value="Manager">Manager</option>
-                      <option value="Sales Manager">Sales Manager</option>
-                      <option value="Sales Representative">Sales Representative</option>
-                      <option value="Inventory Manager">Inventory Manager</option>
                       <option value="Staff">Staff</option>
                     </select>
                     <svg className="absolute right-1.5 sm:right-2 lg:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
