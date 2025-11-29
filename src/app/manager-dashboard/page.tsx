@@ -271,7 +271,8 @@ export default function ManagerDashboard() {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch('/api/managers/orders', {
+      // Request a high limit to get all orders for the manager
+      const response = await fetch('/api/managers/orders?limit=1000&page=1', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
