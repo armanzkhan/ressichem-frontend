@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import { PermissionGate } from "@/components/Auth/PermissionGate";
+import { getAuthHeaders } from "@/lib/auth";
 
 interface User {
   _id: string;
@@ -35,11 +36,14 @@ export default function EditUser() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [user, setUser] = useState<User | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`/api/users/${userId}`);
+        const response = await fetch(`/api/users/${userId}`, {
+          headers: getAuthHeaders(),
+        });
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
@@ -53,11 +57,15 @@ export default function EditUser() {
             isActive: userData.isActive !== undefined ? userData.isActive : true
           });
         } else {
-          setMessage("Failed to load user data");
+          setMessage("Failed to load user data. The user may not exist or you may not have permission.");
+          setUser(null);
         }
       } catch (error) {
         console.error("Error fetching user:", error);
         setMessage("Error loading user data");
+        setUser(null);
+      } finally {
+        setInitialized(true);
       }
     };
 
@@ -101,11 +109,42 @@ export default function EditUser() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (!user) {
+  // While fetching initial data, show a loading spinner
+  if (!initialized) {
     return (
       <ProtectedRoute requiredPermission="users.read">
         <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  // If initialized but user not found or not accessible, show an error message instead of a blank page
+  if (!user) {
+    return (
+      <ProtectedRoute requiredPermission="users.update">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center max-w-md mx-auto px-4">
+            <h2 className="text-2xl font-bold text-dark dark:text-white mb-4">
+              User Not Found
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              The requested user could not be loaded. They may have been deleted, 
+              or you might not have permission to edit this user.
+            </p>
+            {message && (
+              <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+                {message}
+              </p>
+            )}
+            <button
+              onClick={() => router.push("/users")}
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-center font-medium text-white hover:bg-opacity-90"
+            >
+              Back to Users
+            </button>
+          </div>
         </div>
       </ProtectedRoute>
     );
