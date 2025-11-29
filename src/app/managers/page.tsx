@@ -594,8 +594,20 @@ function ManagersPage() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  // Get unique categories from managers
-  const managerCategories = [...new Set(managers.flatMap(m => 
+  // Allowed main categories (8 actual categories)
+  const allowedMainCategories = [
+    'Building Care & Maintenance',
+    'Concrete Admixtures',
+    'Decorative Concrete',
+    'Dry Mix Mortars / Premix Plasters',
+    'Epoxy Adhesives and Coatings',
+    'Epoxy Floorings & Coatings',
+    'Specialty Products',
+    'Tiling and Grouting Materials'
+  ];
+
+  // Get unique categories from managers, but only include the 8 main categories
+  const allManagerCategories = [...new Set(managers.flatMap(m => 
     (m?.assignedCategories && Array.isArray(m.assignedCategories)) 
       ? m.assignedCategories.map(categoryItem => {
           const categoryName = typeof categoryItem === 'string' 
@@ -605,6 +617,24 @@ function ManagersPage() {
         })
       : []
   ))];
+
+  // Filter to only show the 8 main categories (normalize for matching)
+  const normalizeCategory = (cat: string): string => {
+    if (!cat || typeof cat !== 'string') return '';
+    return cat.toLowerCase().trim()
+      .replace(/\s*&\s*/g, ' and ')
+      .replace(/\s+/g, ' ');
+  };
+
+  const managerCategories = allowedMainCategories.filter(allowedCat => {
+    const normalizedAllowed = normalizeCategory(allowedCat);
+    return allManagerCategories.some(managerCat => {
+      const normalizedManager = normalizeCategory(managerCat);
+      return normalizedAllowed === normalizedManager || 
+             normalizedManager.includes(normalizedAllowed) ||
+             normalizedAllowed.includes(normalizedManager);
+    });
+  });
 
   // Get status counts
   const statusCounts = {
