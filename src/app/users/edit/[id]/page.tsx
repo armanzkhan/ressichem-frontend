@@ -16,6 +16,8 @@ interface User {
   role: string;
   company_id: string;
   isActive: boolean;
+  isCustomer?: boolean;
+  isManager?: boolean;
   createdAt: string;
 }
 
@@ -37,6 +39,16 @@ export default function EditUser() {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [initialized, setInitialized] = useState(false);
+  
+  // Determine user type
+  const userType = user ? (
+    user.isCustomer ? 'Customer' :
+    user.isManager ? 'Manager' :
+    'Staff'
+  ) : null;
+  
+  // Check if form should be read-only (customers and managers are read-only)
+  const isReadOnly = user ? (user.isCustomer || user.isManager) : false;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -84,6 +96,7 @@ export default function EditUser() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(formData),
       });
@@ -171,10 +184,35 @@ export default function EditUser() {
 
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           <div className="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
-            <h3 className="font-medium text-black dark:text-white">
-              User Information
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-black dark:text-white">
+                User Information
+              </h3>
+              {userType && (
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    userType === 'Customer' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                    userType === 'Manager' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                  }`}>
+                    {userType}
+                  </span>
+                  {isReadOnly && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                      Read Only
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
+          {isReadOnly && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mx-6.5 mt-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Note:</strong> This user is a {userType?.toLowerCase()}. {userType} accounts cannot be edited through this interface.
+              </p>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="p-6.5">
             <div className="mb-4.5 grid grid-cols-1 gap-6 xl:grid-cols-2">
               <div>
@@ -187,6 +225,7 @@ export default function EditUser() {
                   className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  disabled={isReadOnly}
                   required
                 />
               </div>
@@ -201,6 +240,7 @@ export default function EditUser() {
                   className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  disabled={isReadOnly}
                   required
                 />
               </div>
@@ -216,6 +256,7 @@ export default function EditUser() {
                 className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
+                disabled={isReadOnly}
                 required
               />
             </div>
@@ -230,6 +271,7 @@ export default function EditUser() {
                 className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                 value={formData.phone}
                 onChange={(e) => handleInputChange("phone", e.target.value)}
+                disabled={isReadOnly}
                 required
               />
             </div>
@@ -242,6 +284,7 @@ export default function EditUser() {
                 className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                 value={formData.role}
                 onChange={(e) => handleInputChange("role", e.target.value)}
+                disabled={isReadOnly}
                 required
               >
                 <option value="">Select Role</option>
@@ -262,6 +305,7 @@ export default function EditUser() {
                 className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                 value={formData.company_id}
                 onChange={(e) => handleInputChange("company_id", e.target.value)}
+                disabled={isReadOnly}
                 required
               />
             </div>
@@ -273,6 +317,7 @@ export default function EditUser() {
                   className="rounded border-[1.5px] border-stroke"
                   checked={formData.isActive}
                   onChange={(e) => handleInputChange("isActive", e.target.checked)}
+                  disabled={isReadOnly}
                 />
                 <span className="text-black dark:text-white">Active User</span>
               </label>
@@ -289,26 +334,28 @@ export default function EditUser() {
             )}
 
             <div className="flex gap-4">
-              <button
-                type="submit"
-                className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90 disabled:opacity-50"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    Updating...
-                  </div>
-                ) : (
-                  "Update User"
-                )}
-              </button>
+              {!isReadOnly && (
+                <button
+                  type="submit"
+                  className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90 disabled:opacity-50"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Updating...
+                    </div>
+                  ) : (
+                    "Update User"
+                  )}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => router.push("/users")}
-                className="flex w-full justify-center rounded border border-stroke bg-gray-2 p-3 font-medium text-black hover:bg-opacity-90 dark:border-strokedark dark:bg-meta-4 dark:text-white"
+                className={`flex w-full justify-center rounded border border-stroke bg-gray-2 p-3 font-medium text-black hover:bg-opacity-90 dark:border-strokedark dark:bg-meta-4 dark:text-white ${isReadOnly ? '' : ''}`}
               >
-                Cancel
+                {isReadOnly ? 'Back to Users' : 'Cancel'}
               </button>
             </div>
           </form>
