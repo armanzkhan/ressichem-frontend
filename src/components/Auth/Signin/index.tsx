@@ -163,30 +163,63 @@ export default function Signin() {
       console.error("Error code:", err.code);
       console.error("Error message:", err.message);
       console.error("Error response:", err.response);
+      console.error("Error response data:", err.response?.data);
+      console.error("Error response status:", err.response?.status);
+      console.error("Error response headers:", err.response?.headers);
+      console.error("Full error object:", JSON.stringify(err, null, 2));
+      
+      const backendUrl = getBackendUrl();
+      console.error("Backend URL being used:", backendUrl);
+      
+      // Log the full error response data for debugging
+      if (err.response?.data) {
+        console.error("=== FULL ERROR RESPONSE DATA ===");
+        console.error(JSON.stringify(err.response.data, null, 2));
+        console.error("================================");
+      }
       
       // Handle different error types
       if (err.code === 'ECONNABORTED') {
         setError("Connection timeout. Please check your internet connection and try again.");
       } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error') || err.message?.includes('Failed to fetch')) {
-        const backendUrl = getBackendUrl();
         console.error("Network error detected. Backend URL should be:", backendUrl);
-        setError(`Cannot connect to server. Please ensure the backend is running on ${backendUrl}`);
+        setError(`Cannot connect to server at ${backendUrl}. Please ensure the backend is running and accessible.`);
       } else if (err.response?.status === 401) {
-        setError("Invalid credentials. Please check your email and password.");
+        const errorMsg = err.response?.data?.message || "Invalid credentials";
+        console.error("401 Unauthorized - Error response:", err.response?.data);
+        setError(`${errorMsg}. Please check your email and password.`);
         setLoginAttempts(prev => prev + 1);
       } else if (err.response?.status === 404) {
-        setError("User not found. Please check your email address.");
+        const errorMsg = err.response?.data?.message || "User not found";
+        console.error("404 Not Found - Error response:", err.response?.data);
+        setError(`${errorMsg}. Please check your email address.`);
         setLoginAttempts(prev => prev + 1);
       } else if (err.response?.status === 403) {
         setError("Account is disabled. Please contact your administrator.");
       } else if (err.response?.status === 429) {
         setError("Too many login attempts. Please try again later.");
         setIsLocked(true);
+      } else if (err.response?.status === 500) {
+        const errorData = err.response?.data || {};
+        const errorMsg = errorData.message || errorData.error || "Server error";
+        const errorDetails = errorData.details || errorData.stack || "";
+        console.error("Server error details:", errorData);
+        console.error("Full error response:", JSON.stringify(errorData, null, 2));
+        
+        let displayError = `${errorMsg}. Backend URL: ${backendUrl}`;
+        if (errorDetails && typeof errorDetails === 'string' && errorDetails.length < 200) {
+          displayError += `. Details: ${errorDetails}`;
+        }
+        displayError += ". Please check backend logs.";
+        setError(displayError);
+        setLoginAttempts(prev => prev + 1);
       } else if (err.response?.data?.message) {
         setError(err.response.data.message);
         setLoginAttempts(prev => prev + 1);
       } else {
-        setError("Login failed. Please check your connection and try again.");
+        const errorDetails = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+        console.error("Unknown error:", errorDetails);
+        setError(`Login failed: ${err.message || 'Unknown error'}. Backend: ${backendUrl}`);
         setLoginAttempts(prev => prev + 1);
       }
 

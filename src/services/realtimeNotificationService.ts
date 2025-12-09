@@ -55,7 +55,8 @@ class RealtimeNotificationService {
   }
 
   connect() {
-    if (this.isConnected || !this.token) {
+    // Don't connect during build time or if already connected
+    if (typeof window === 'undefined' || this.isConnected || !this.token) {
       return;
     }
 
@@ -546,6 +547,11 @@ class RealtimeNotificationService {
   }
 
   private reconnect() {
+    // Don't reconnect during build time
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);

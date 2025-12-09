@@ -6,10 +6,18 @@ class RealtimeService {
   private listeners: Map<string, Function[]> = new Map();
 
   constructor() {
-    this.connect();
+    // Only connect in browser environment, not during build
+    if (typeof window !== 'undefined') {
+      this.connect();
+    }
   }
 
   private connect() {
+    // Double check we're in browser environment
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000/ws';
     
     try {
@@ -65,6 +73,11 @@ class RealtimeService {
   }
 
   private reconnect() {
+    // Don't reconnect during build time
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
