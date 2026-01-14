@@ -1013,9 +1013,9 @@ export default function CreateOrderPage() {
 
   // Calculate totals
   const subtotal = formData.items.reduce((sum, item) => sum + item.price, 0);
-  // Calculate tax: 10% on each item's total, then sum
-  const tax = formData.items.reduce((sum, item) => sum + (item.price * 0.1), 0);
-  const total = subtotal + tax;
+  // Tax removed - no longer calculating or displaying tax
+  const tax = 0;
+  const total = subtotal;
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1560,7 +1560,7 @@ export default function CreateOrderPage() {
                               Total
                             </label>
                             <div className="rounded-lg border border-stroke bg-gray-50 px-4 py-3 text-dark font-semibold dark:border-dark-3 dark:bg-dark-2 dark:text-white">
-                              PKR {(item.price * 1.1).toLocaleString()}
+                              PKR {item.price.toLocaleString()}
                             </div>
                           </div>
                           <button
@@ -1667,8 +1667,8 @@ export default function CreateOrderPage() {
                 <div className="rounded-lg border border-stroke bg-gray-50 p-6 dark:border-dark-3 dark:bg-dark-2">
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-dark dark:text-white">Tax (10%):</span>
-                      <span className="font-medium text-dark dark:text-white">PKR {tax.toLocaleString()}</span>
+                      <span className="text-dark dark:text-white">Total:</span>
+                      <span className="font-medium text-dark dark:text-white">PKR {total.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>

@@ -685,16 +685,25 @@ function OrdersPageContent() {
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-8 text-gray-900 focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/50 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-400 appearance-none transition-all duration-300 text-sm"
                   >
                     <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="processing">Processing</option>
-                    <option value="allocated">Allocated</option>
-                    <option value="dispatched">Dispatched</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
+                    {user?.isManager && !user?.isCompanyAdmin && !user?.isSuperAdmin ? (
+                      <>
+                        <option value="processing">Processing</option>
+                        <option value="rejected">Rejected</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="processing">Processing</option>
+                        <option value="allocated">Allocated</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </>
+                    )}
                   </select>
                   <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -868,16 +877,25 @@ function OrdersPageContent() {
                             onChange={(e) => handleStatusChange(order._id, e.target.value)}
                             className="text-sm px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                           >
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="processing">Processing</option>
-                            <option value="allocated">Allocated</option>
-                            <option value="dispatched">Dispatched</option>
-                            <option value="shipped">Shipped</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                            {user?.isManager && !user?.isCompanyAdmin && !user?.isSuperAdmin ? (
+                              <>
+                                <option value="processing">Processing</option>
+                                <option value="rejected">Rejected</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="processing">Processing</option>
+                                <option value="allocated">Allocated</option>
+                                <option value="dispatched">Dispatched</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                              </>
+                            )}
                           </select>
                         </PermissionGate>
                       </div>
@@ -1229,16 +1247,25 @@ function OrdersPageContent() {
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     required
                   >
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="processing">Processing</option>
-                    <option value="allocated">Allocated</option>
-                    <option value="dispatched">Dispatched</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
+                    {user?.isManager && !user?.isCompanyAdmin && !user?.isSuperAdmin ? (
+                      <>
+                        <option value="processing">Processing</option>
+                        <option value="rejected">Rejected</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="processing">Processing</option>
+                        <option value="allocated">Allocated</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 

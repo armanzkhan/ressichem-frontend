@@ -995,14 +995,6 @@ function ManagersPage() {
                           }`}>
                             {manager.isActive ? 'Active' : 'Inactive'}
                           </span>
-                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            manager.managerLevel === 'head' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200' :
-                            manager.managerLevel === 'lead' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200' :
-                            manager.managerLevel === 'senior' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200'
-                          }`}>
-                            {manager.managerLevel}
-                          </span>
                         </div>
                       </div>
                       
@@ -1114,9 +1106,6 @@ function ManagersPage() {
                           Assigned Categories
                         </th>
                         <th className="min-w-[100px] px-4 py-4 font-medium text-blue-900 dark:text-white">
-                          Level
-                        </th>
-                        <th className="min-w-[100px] px-4 py-4 font-medium text-blue-900 dark:text-white">
                           Orders Managed
                         </th>
                         <th className="min-w-[100px] px-4 py-4 font-medium text-blue-900 dark:text-white">
@@ -1170,17 +1159,6 @@ function ManagersPage() {
                                 );
                               })}
                             </div>
-                          </td>
-                          
-                          <td className="px-4 py-4">
-                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              manager.managerLevel === 'head' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200' :
-                              manager.managerLevel === 'lead' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-200' :
-                              manager.managerLevel === 'senior' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200' :
-                              'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                            }`}>
-                              {manager.managerLevel}
-                            </span>
                           </td>
                           
                           <td className="px-4 py-4">
@@ -1292,16 +1270,6 @@ function ManagersPage() {
                           {manager.assignedCategories.length} categories assigned
                         </p>
                       </div>
-                      <div className="ml-2 flex-shrink-0">
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          manager.managerLevel === 'head' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200' :
-                          manager.managerLevel === 'lead' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-200' :
-                          manager.managerLevel === 'senior' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200' :
-                          'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                        }`}>
-                          {manager.managerLevel}
-                        </span>
-                      </div>
                     </div>
                   </button>
                 ))}
@@ -1343,18 +1311,6 @@ function ManagersPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Manager ID</label>
                     <p className="text-sm text-blue-900 dark:text-white">{editingManager.user_id}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Manager Level</label>
-                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      editingManager.managerLevel === 'head' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200' :
-                      editingManager.managerLevel === 'lead' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-200' :
-                      editingManager.managerLevel === 'senior' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200' :
-                      'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                    }`}>
-                      {editingManager.managerLevel}
-                    </span>
                   </div>
                   
                   <div>
@@ -1477,20 +1433,6 @@ function ManagersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-900 dark:text-white mb-2">Manager Level</label>
-                  <select
-                    value={newManager.managerLevel}
-                    onChange={(e) => setNewManager({...newManager, managerLevel: e.target.value})}
-                    className="w-full rounded-lg border border-stroke bg-transparent px-4 py-3 text-blue-900 focus:border-blue-900 focus:outline-none dark:border-dark-3 dark:bg-dark-2 dark:text-white"
-                  >
-                    <option value="junior">Junior</option>
-                    <option value="senior">Senior</option>
-                    <option value="lead">Lead</option>
-                    <option value="head">Head</option>
-                  </select>
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium text-blue-900 dark:text-white mb-2">Assigned Categories</label>
                   <div className="space-y-2 max-h-32 overflow-y-auto">
                     {availableCategories.map((category) => (
@@ -1561,20 +1503,6 @@ function ManagersPage() {
                     disabled
                     className="w-full rounded-lg border border-stroke bg-gray-100 px-4 py-3 text-gray-500 dark:border-dark-3 dark:bg-gray-800 dark:text-gray-400"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-blue-900 dark:text-white mb-2">Manager Level</label>
-                  <select
-                    value={editingManager.managerLevel || 'junior'}
-                    onChange={(e) => setEditingManager({...editingManager, managerLevel: e.target.value})}
-                    className="w-full rounded-lg border border-stroke bg-transparent px-4 py-3 text-blue-900 focus:border-blue-900 focus:outline-none dark:border-dark-3 dark:bg-dark-2 dark:text-white"
-                  >
-                    <option value="junior">Junior</option>
-                    <option value="senior">Senior</option>
-                    <option value="lead">Lead</option>
-                    <option value="head">Head</option>
-                  </select>
                 </div>
 
                 <div>
