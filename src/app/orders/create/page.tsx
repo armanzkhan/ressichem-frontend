@@ -1052,7 +1052,9 @@ export default function CreateOrderPage() {
           router.push('/orders');
         }, 2000);
       } else {
-        setMessage("❌ Failed to create order");
+        const errorData = await response.json().catch(() => ({ message: 'Failed to create order' }));
+        console.error('Order creation error:', errorData);
+        setMessage(`❌ Failed to create order: ${errorData.message || errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error creating order:', error);
