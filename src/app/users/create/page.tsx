@@ -5,6 +5,7 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { getBackendUrl } from "@/lib/getBackendUrl";
 
 interface Role {
   _id: string;
@@ -73,7 +74,7 @@ export default function CreateUserPage() {
         }
 
         console.log("Fetching roles and permissions...");
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = getBackendUrl();
         console.log("API URL:", apiUrl);
 
         const [rolesRes, permissionsRes, managersRes, categoriesRes, managersAllRes] = await Promise.all([
@@ -1004,30 +1005,6 @@ export default function CreateUserPage() {
                 </p>
                 
                 <div className="space-y-6">
-                  {/* Manager Level */}
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h5 className="text-sm font-medium text-blue-900 dark:text-white mb-3">Manager Level</h5>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                      {['junior', 'senior', 'lead', 'head'].map((level) => (
-                        <label key={level} className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                          formData.managerLevel === level
-                            ? 'border-blue-900 bg-blue-900/5'
-                            : 'border-stroke dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }`}>
-                          <input
-                            type="radio"
-                            name="managerLevel"
-                            value={level}
-                            checked={formData.managerLevel === level}
-                            onChange={(e) => setFormData({...formData, managerLevel: e.target.value})}
-                            className="text-blue-900 focus:ring-blue-900"
-                          />
-                          <span className="text-sm font-medium text-blue-900 dark:text-white capitalize">{level}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Category Assignment */}
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                     <h5 className="text-sm font-medium text-blue-900 dark:text-white mb-3">

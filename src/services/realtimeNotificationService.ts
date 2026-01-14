@@ -1,6 +1,7 @@
 'use client';
 
 import { pushNotificationService } from './pushNotificationService';
+import { getBackendUrl } from '@/lib/getBackendUrl';
 
 interface RealtimeNotification {
   type: string;
@@ -62,8 +63,8 @@ class RealtimeNotificationService {
 
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // Use environment variable for backend URL or default to localhost:5000
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'localhost:5000';
+      // Use getBackendUrl() to get the correct backend URL (supports Vercel deployment)
+      const backendUrl = getBackendUrl();
       // Ensure we have the correct format for WebSocket URL
       const cleanBackendUrl = backendUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
       const wsUrl = `${protocol}//${cleanBackendUrl}/ws`;
@@ -98,8 +99,22 @@ class RealtimeNotificationService {
       };
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        // WebSocket error events don't always have detailed error information
+        // Log connection state and URL for debugging
+        const wsState = this.ws?.readyState;
+        const stateNames = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
+        const stateName = wsState !== undefined ? stateNames[wsState] : 'UNKNOWN';
+        
+        console.warn('WebSocket connection error:', {
+          url: wsUrl,
+          readyState: stateName,
+          reconnectAttempts: this.reconnectAttempts,
+          hasToken: !!this.token,
+          error: error instanceof Error ? error.message : 'Connection failed'
+        });
+        
         this.isConnected = false;
+        // The onclose handler will handle reconnection
       };
 
     } catch (error) {

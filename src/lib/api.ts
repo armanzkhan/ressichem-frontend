@@ -1,4 +1,22 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
+import { getBackendUrl } from "./getBackendUrl";
+import { getBackendUrlServer } from "./getBackendUrlServer";
+
+// Get backend URL dynamically (supports localhost for dev, Vercel URL for production)
+const getApiBase = () => {
+  const backendUrl = getBackendUrl();
+  // Ensure we have /api at the end
+  return backendUrl.endsWith('/api') ? backendUrl : `${backendUrl}/api`;
+};
+
+// Server-side API base
+const getApiBaseServer = () => {
+  const backendUrl = getBackendUrlServer();
+  return backendUrl.endsWith('/api') ? backendUrl : `${backendUrl}/api`;
+};
+
+export const API_BASE = typeof window !== 'undefined' 
+  ? getApiBase() 
+  : getApiBaseServer();
 
 export async function apiPost<T>(path: string, body: unknown, token?: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
