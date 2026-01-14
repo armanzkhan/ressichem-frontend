@@ -1504,7 +1504,20 @@ function OrdersPageContent() {
                   <div className="flex justify-between border-t pt-2">
                     <span className="font-medium text-gray-600 dark:text-gray-400">Total:</span>
                     <span className="font-bold text-green-600 dark:text-green-400">
-                      PKR {(invoiceOrder.finalTotal || invoiceOrder.total).toLocaleString()}
+                      PKR {(() => {
+                        // Always show subtotal (amount without tax)
+                        if (invoiceOrder.finalTotal) {
+                          return invoiceOrder.finalTotal.toLocaleString();
+                        } else if (invoiceOrder.subtotal && invoiceOrder.subtotal > 0) {
+                          return invoiceOrder.subtotal.toLocaleString();
+                        } else if (invoiceOrder.tax && invoiceOrder.tax > 0 && invoiceOrder.total) {
+                          // Calculate subtotal from total - tax for old orders
+                          return (invoiceOrder.total - invoiceOrder.tax).toLocaleString();
+                        } else if (invoiceOrder.total) {
+                          return invoiceOrder.total.toLocaleString();
+                        }
+                        return '0';
+                      })()}
                     </span>
                   </div>
                 </div>
@@ -1518,7 +1531,20 @@ function OrdersPageContent() {
                   <ul className="list-disc list-inside mt-2 space-y-1">
                     <li>Invoice will be generated for {invoiceOrder.customer.companyName}</li>
                     <li>Order: {invoiceOrder.orderNumber}</li>
-                    <li>Total Amount: PKR {(invoiceOrder.finalTotal || invoiceOrder.total).toLocaleString()}</li>
+                    <li>Total Amount: PKR {(() => {
+                      // Always show subtotal (amount without tax)
+                      if (invoiceOrder.finalTotal) {
+                        return invoiceOrder.finalTotal.toLocaleString();
+                      } else if (invoiceOrder.subtotal && invoiceOrder.subtotal > 0) {
+                        return invoiceOrder.subtotal.toLocaleString();
+                      } else if (invoiceOrder.tax && invoiceOrder.tax > 0 && invoiceOrder.total) {
+                        // Calculate subtotal from total - tax for old orders
+                        return (invoiceOrder.total - invoiceOrder.tax).toLocaleString();
+                      } else if (invoiceOrder.total) {
+                        return invoiceOrder.total.toLocaleString();
+                      }
+                      return '0';
+                    })()}</li>
                     <li>Invoice will be available in the Invoices section</li>
                   </ul>
                 </div>
