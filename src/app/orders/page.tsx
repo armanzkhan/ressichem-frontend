@@ -852,7 +852,7 @@ function OrdersPageContent() {
                             )}
                           </div>
                         ) : (
-                          <span className="font-medium text-blue-900 dark:text-white">PKR {(order.total || 0).toLocaleString()}</span>
+                          <span className="font-medium text-blue-900 dark:text-white">PKR {(order.subtotal || order.total || 0).toLocaleString()}</span>
                         )}
                       </span>
                     </div>
@@ -1119,7 +1119,13 @@ function OrdersPageContent() {
                   <h4 className="font-medium text-blue-900 dark:text-white mb-2">Order Information</h4>
                   <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <p className="text-sm"><strong>Status:</strong> <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(selectedOrder?.status || '')}`}>{selectedOrder?.status}</span></p>
-                    <p className="text-sm"><strong>Total:</strong> PKR {(selectedOrder?.total || 0).toLocaleString()}</p>
+                    <p className="text-sm"><strong>Total:</strong> PKR {(selectedOrder?.subtotal || selectedOrder?.total || 0).toLocaleString()}</p>
+                    {selectedOrder?.tax && selectedOrder.tax > 0 && (
+                      <p className="text-sm text-gray-500"><strong>Tax (10%):</strong> PKR {selectedOrder.tax.toLocaleString()}</p>
+                    )}
+                    {selectedOrder?.finalTotal && (
+                      <p className="text-sm text-green-600"><strong>Final Total (after discount):</strong> PKR {selectedOrder.finalTotal.toLocaleString()}</p>
+                    )}
                     <p className="text-sm"><strong>Date:</strong> {selectedOrder?.orderDate ? new Date(selectedOrder.orderDate).toLocaleDateString() : 'N/A'}</p>
                     {selectedOrder?.notes && <p className="text-sm"><strong>Notes:</strong> {selectedOrder.notes}</p>}
                   </div>
