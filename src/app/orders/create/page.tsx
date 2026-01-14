@@ -1024,6 +1024,20 @@ export default function CreateOrderPage() {
     setMessage("");
 
     try {
+      // Validate customer is set
+      if (!formData.customer) {
+        setMessage("❌ Please select a customer or ensure your customer account is properly linked");
+        setSubmitting(false);
+        return;
+      }
+
+      // Validate items
+      if (formData.items.length === 0) {
+        setMessage("❌ Please add at least one item to the order");
+        setSubmitting(false);
+        return;
+      }
+
       const orderData = {
         customer: formData.customer,
         items: formData.items.map(item => ({
@@ -1034,11 +1048,18 @@ export default function CreateOrderPage() {
           tdsLink: item.tdsLink || ""
         })),
         subtotal: subtotal,
-        tax: tax,
+        tax: 0, // Backend will calculate tax
         total: total,
         notes: formData.notes,
         company_id: 'RESSICHEM'
       };
+
+      console.log('📦 Submitting order:', { 
+        customer: orderData.customer, 
+        itemsCount: orderData.items.length,
+        subtotal: orderData.subtotal,
+        total: orderData.total
+      });
 
       const response = await fetch('/api/orders', {
         method: 'POST',
@@ -1052,13 +1073,24 @@ export default function CreateOrderPage() {
           router.push('/orders');
         }, 2000);
       } else {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to create order' }));
-        console.error('Order creation error:', errorData);
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || 'Failed to create order' };
+        }
+        console.error('Order creation error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          orderData: { customer: orderData.customer, itemsCount: orderData.items.length }
+        });
         setMessage(`❌ Failed to create order: ${errorData.message || errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error creating order:', error);
-      setMessage("❌ Error creating order");
+      setMessage(`❌ Error creating order: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSubmitting(false);
     }
