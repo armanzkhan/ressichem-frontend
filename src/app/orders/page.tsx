@@ -852,7 +852,22 @@ function OrdersPageContent() {
                             )}
                           </div>
                         ) : (
-                          <span className="font-medium text-blue-900 dark:text-white">PKR {(order.subtotal || order.total || 0).toLocaleString()}</span>
+                          <span className="font-medium text-blue-900 dark:text-white">
+                            PKR {(() => {
+                              // Always show subtotal (amount without tax)
+                              // For old orders, calculate subtotal from total if tax exists
+                              if (order.subtotal && order.subtotal > 0) {
+                                return order.subtotal.toLocaleString();
+                              } else if (order.tax && order.tax > 0 && order.total) {
+                                // Calculate subtotal from total - tax for old orders
+                                return (order.total - order.tax).toLocaleString();
+                              } else if (order.total) {
+                                // If no tax, total equals subtotal
+                                return order.total.toLocaleString();
+                              }
+                              return '0';
+                            })()}
+                          </span>
                         )}
                       </span>
                     </div>
@@ -1119,9 +1134,22 @@ function OrdersPageContent() {
                   <h4 className="font-medium text-blue-900 dark:text-white mb-2">Order Information</h4>
                   <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <p className="text-sm"><strong>Status:</strong> <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(selectedOrder?.status || '')}`}>{selectedOrder?.status}</span></p>
-                    <p className="text-sm"><strong>Total:</strong> PKR {(selectedOrder?.subtotal || selectedOrder?.total || 0).toLocaleString()}</p>
+                    <p className="text-sm"><strong>Total:</strong> PKR {(() => {
+                      const order = selectedOrder;
+                      if (!order) return '0';
+                      // Always show subtotal (amount without tax)
+                      if (order.subtotal && order.subtotal > 0) {
+                        return order.subtotal.toLocaleString();
+                      } else if (order.tax && order.tax > 0 && order.total) {
+                        // Calculate subtotal from total - tax for old orders
+                        return (order.total - order.tax).toLocaleString();
+                      } else if (order.total) {
+                        return order.total.toLocaleString();
+                      }
+                      return '0';
+                    })()}</p>
                     {selectedOrder?.tax && selectedOrder.tax > 0 && (
-                      <p className="text-sm text-gray-500"><strong>Tax (10%):</strong> PKR {selectedOrder.tax.toLocaleString()}</p>
+                      <p className="text-sm text-gray-500 line-through"><strong>Tax (10%):</strong> PKR {selectedOrder.tax.toLocaleString()} (removed)</p>
                     )}
                     {selectedOrder?.finalTotal && (
                       <p className="text-sm text-green-600"><strong>Final Total (after discount):</strong> PKR {selectedOrder.finalTotal.toLocaleString()}</p>
